@@ -1,1 +1,1 @@
-# diss-api
+# Go Backend Rest Api for the project
