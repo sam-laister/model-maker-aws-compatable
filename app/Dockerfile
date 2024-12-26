@@ -10,7 +10,7 @@ COPY . .
 RUN go mod download
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -o main server/server.go
 
 FROM alpine:latest as run
 

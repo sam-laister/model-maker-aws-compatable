@@ -25,3 +25,5 @@ go.work.sum
 # env file
 .env
 .env.local
+
+service-account-key.json
