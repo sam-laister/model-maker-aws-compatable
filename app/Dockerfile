@@ -21,4 +21,7 @@ COPY --from=build /app /app
 WORKDIR /app
 
 EXPOSE 3333
+
+ENTRYPOINT ["./entrypoint.sh"]
+
 CMD ["./main"]

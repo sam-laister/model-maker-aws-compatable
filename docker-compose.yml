@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   app:
+    tty: true
     build:
       context: ./app
       dockerfile: Dockerfile
@@ -13,6 +14,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=appdb
+      - MIGRATE_VERSION=v4.18.1
     depends_on:
       - db
     networks:
