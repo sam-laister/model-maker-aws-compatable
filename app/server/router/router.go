@@ -17,8 +17,8 @@ func NewRouter(
 	r := gin.Default()
 
 	// Set up the authentication routes
-	r.POST("/login", authController.Login)
-	r.POST("/register", authController.Register)
+	r.GET("/login", authController.Login)
+	// r.POST("/register", authController.Register)
 
 	return r
 }

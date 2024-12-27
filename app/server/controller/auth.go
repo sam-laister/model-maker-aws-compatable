@@ -32,24 +32,9 @@ func (c *AuthController) Login(ctx *gin.Context) {
 
 	reqToken = strings.TrimSpace(splitToken[1])
 
-	// Get the email from the request body
-	var registrationData struct {
-		Email string `json:"email"`
-	}
-
 	authToken, err := c.authService.FireAuth.VerifyIDToken(context.Background(), reqToken)
 	if err != nil {
 		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid token"})
-		return
-	}
-
-	if err := ctx.ShouldBindJSON(&registrationData); err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	if registrationData.Email == "" {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": "Email is required"})
 		return
 	}
 
@@ -64,8 +49,8 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{"user": user})
 }
 
-// Register handles the POST /register route and creates a new user with the provided credentials
-func (c *AuthController) Register(ctx *gin.Context) {
+// Register handles the PUT /user route and creates a new user with the provided credentials
+func (c *AuthController) UpdateUser(ctx *gin.Context) {
 
 	reqToken := ctx.Request.Header.Get("Authorization")
 	splitToken := strings.Split(reqToken, "Bearer")
