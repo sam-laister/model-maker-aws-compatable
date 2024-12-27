@@ -1,13 +1,14 @@
 package db
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // ConnectToDatabase establishes a connection to the database and returns a reference to the database instance
 func ConnectToDatabase(connectionString string) (*gorm.DB, error) {
-	db, err := gorm.Open("postgres", connectionString)
+
+	db, err := gorm.Open(postgres.Open(connectionString), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
