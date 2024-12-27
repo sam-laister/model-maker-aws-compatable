@@ -5,12 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/Soup666/diss-api/auth"
-	"github.com/Soup666/diss-api/model"
-	"github.com/Soup666/diss-api/server/controller"
-	"github.com/Soup666/diss-api/server/router"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/Soup666/diss-api/controller"
+	db "github.com/Soup666/diss-api/database"
+	"github.com/Soup666/diss-api/router"
+	"github.com/Soup666/diss-api/services"
 
 	firebase "firebase.google.com/go/v4"
 	"google.golang.org/api/option"
@@ -18,35 +16,14 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-var (
-	Instance *gorm.DB
-)
-
-func dbMigrate() {
-	if err := Instance.AutoMigrate(&model.User{}); err != nil {
-		log.Fatalf("Failed to run database migrations: %v", err)
-	}
-}
+var authService *services.AuthService
 
 func main() {
 	// Set up the database connection
 	log.Println("Connecting to database...")
 	log.Println(os.Getenv("DATABASE_URL"))
 
-	database, err := gorm.Open(postgres.Open(os.Getenv("DATABASE_URL")), &gorm.Config{})
-	if err != nil {
-		log.Fatal("Failed to connect to database")
-	}
-
-	Instance = database
-
-	if Instance == nil {
-		log.Fatal("Database connection is nil")
-	}
-
-	Instance.Migrator().DropTable(&model.User{})
-
-	dbMigrate()
+	db.ConnectDatabase(os.Getenv("DATABASE_URL"))
 
 	// Create a Firebase app instance
 	opt := option.WithCredentialsFile("./service-account-key.json")
@@ -62,14 +39,15 @@ func main() {
 	}
 
 	// Set up the authentication service
-	authService := &auth.AuthService{
-		DB:       Instance,
+	authService := &services.AuthService{
 		FireAuth: authClient,
 	}
+
 	authController := controller.NewAuthController(authService)
+	taskController := controller.NewTaskController(authService)
 
 	// Set up the HTTP router
-	r := router.NewRouter(authController)
+	r := router.NewRouter(authController, taskController)
 
 	// Start the server
 	r.Run(":3333")

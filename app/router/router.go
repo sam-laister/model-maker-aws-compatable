@@ -1,24 +1,24 @@
 package router
 
 import (
-	"github.com/Soup666/diss-api/server/controller"
+	"github.com/Soup666/diss-api/controller"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Router struct {
-	authController *controller.AuthController
-}
-
 func NewRouter(
 	authController *controller.AuthController,
+	taskController *controller.TaskController,
 ) *gin.Engine {
 	// Create a new Gin router
 	r := gin.Default()
 
 	// Set up the authentication routes
 	r.GET("/login", authController.Login)
-	// r.POST("/register", authController.Register)
+
+	// Tasks
+	r.GET("/tasks", taskController.GetTasks)
+	r.POST("/tasks", taskController.CreateTask)
 
 	return r
 }
