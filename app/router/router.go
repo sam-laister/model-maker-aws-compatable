@@ -9,6 +9,7 @@ import (
 func NewRouter(
 	authController *controller.AuthController,
 	taskController *controller.TaskController,
+	uploadController *controller.UploadController,
 ) *gin.Engine {
 	// Create a new Gin router
 	r := gin.Default()
@@ -19,6 +20,11 @@ func NewRouter(
 	// Tasks
 	r.GET("/tasks", taskController.GetTasks)
 	r.POST("/tasks", taskController.CreateTask)
+	r.POST("/tasks/:taskID/upload", taskController.UploadFileToTask)
+
+	// Uploads
+	r.POST("/uploads", uploadController.UploadFile)
+	r.GET("/uploads/:filename", uploadController.GetFile)
 
 	return r
 }
