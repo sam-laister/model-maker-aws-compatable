@@ -18,7 +18,7 @@ func ConnectDatabase(connectionString string) {
 		log.Fatal("Error connecting to the database: ", err)
 	}
 
-	// DB.Migrator().DropTable(&models.Task{}, &models.User{}, &models.Image{})
+	// DB.Migrator().DropTable(&models.Task{}, &models.User{}, &models.Image{}, &models.Mesh{})
 
 	// Migrate the schema to ensure tables are created/updated
 	DB.AutoMigrate(&models.Task{}, &models.User{}, &models.Image{})

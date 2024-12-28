@@ -90,3 +90,19 @@ func (c *UploadController) GetFile(ctx *gin.Context) {
 	// Serve the file
 	ctx.File(filePath)
 }
+
+func (c *UploadController) GetObject(ctx *gin.Context) {
+	filename := ctx.Param("filename")
+
+	// Construct the full file path
+	filePath := filepath.Join("objects", filename)
+
+	// Check if the file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Object not found"})
+		return
+	}
+
+	// Serve the file
+	ctx.File(filePath)
+}

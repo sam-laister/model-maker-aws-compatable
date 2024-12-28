@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Soup666/diss-api/database"
+	"github.com/Soup666/diss-api/model"
 	models "github.com/Soup666/diss-api/model"
 	repositories "github.com/Soup666/diss-api/repositories"
 	services "github.com/Soup666/diss-api/services"
@@ -59,6 +60,14 @@ func (c *TaskController) GetTasks(ctx *gin.Context) {
 		return
 	}
 
+	// add test mesh to all taskjs
+	for i := range tasks {
+		tasks[i].Mesh = model.Mesh{
+			Url:      "/objects/test_object.glb",
+			Filename: "test_object.glb",
+		}
+	}
+
 	ctx.JSON(200, gin.H{"tasks": tasks})
 }
 
@@ -97,6 +106,11 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 	if err := database.DB.Preload("Images").First(&task, taskID).Error; err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
 		return
+	}
+
+	task.Mesh = model.Mesh{
+		Url:      "/objects/test_object.glb",
+		Filename: "test_object.glb",
 	}
 
 	ctx.JSON(200, gin.H{"task": task})
