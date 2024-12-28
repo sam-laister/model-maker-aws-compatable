@@ -66,7 +66,7 @@ func (c *UploadController) UploadFile(ctx *gin.Context) {
 	}
 
 	// Save file metadata in the database
-	image := models.Image{
+	image := models.AppFile{
 		Filename: header.Filename,
 		Url:      fmt.Sprintf("/%s", savePath),
 	}
@@ -76,14 +76,15 @@ func (c *UploadController) UploadFile(ctx *gin.Context) {
 }
 
 func (c *UploadController) GetFile(ctx *gin.Context) {
+	taskId := ctx.Param("taskId")
 	filename := ctx.Param("filename")
 
 	// Construct the full file path
-	filePath := filepath.Join("uploads", filename)
+	filePath := fmt.Sprintf("uploads/task-%s/%s", taskId, filename)
 
 	// Check if the file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Image not found"})
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Image not found", "path": filePath})
 		return
 	}
 

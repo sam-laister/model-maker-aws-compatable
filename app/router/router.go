@@ -27,7 +27,7 @@ func NewRouter(
 
 	// Uploads
 	r.POST("/uploads", uploadController.UploadFile)
-	r.GET("/uploads/:filename", uploadController.GetFile)
+	r.GET("/uploads/:taskId/:filename", uploadController.GetFile)
 
 	r.GET("/objects/:filename", uploadController.GetObject)
 

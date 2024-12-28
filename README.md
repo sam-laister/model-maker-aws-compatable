@@ -7,3 +7,5 @@ Database is handled with migrations using [Go Migrations CLI Tools](https://gith
 mirgate with `source .env && migrate -database ${DATABASE_URL} -path migrations up`
 
 coverter https://developer.apple.com/augmented-reality/tools/
+
+datasets: https://github.com/natowi/photogrammetry_datasets

@@ -13,6 +13,6 @@ type Task struct {
 	Description string
 	Completed   bool
 	UserID      uint
-	Images      []Image `gorm:"foreignKey:TaskID"`
-	Mesh        Mesh    `gorm:"foreignKey:TaskID"`
+	Images      []AppFile `gorm:"foreignKey:TaskID"`
+	Mesh        AppFile   `gorm:"foreignKey:TaskID"`
 }

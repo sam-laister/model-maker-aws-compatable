@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/Soup666/diss-api/database"
 	"github.com/Soup666/diss-api/model"
-	models "github.com/Soup666/diss-api/model"
 	repositories "github.com/Soup666/diss-api/repositories"
 	services "github.com/Soup666/diss-api/services"
 	"github.com/gin-gonic/gin"
@@ -62,7 +62,7 @@ func (c *TaskController) GetTasks(ctx *gin.Context) {
 
 	// add test mesh to all taskjs
 	for i := range tasks {
-		tasks[i].Mesh = model.Mesh{
+		tasks[i].Mesh = model.AppFile{
 			Url:      "/objects/test_object.glb",
 			Filename: "test_object.glb",
 		}
@@ -108,7 +108,7 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 		return
 	}
 
-	task.Mesh = model.Mesh{
+	task.Mesh = model.AppFile{
 		Url:      "/objects/test_object.glb",
 		Filename: "test_object.glb",
 	}
@@ -155,7 +155,7 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		return
 	}
 
-	task := models.Task{
+	task := model.Task{
 		Title:       taskData.Title,
 		Description: taskData.Description,
 		UserID:      user.ID,
@@ -197,7 +197,7 @@ func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 	}
 
 	// Check if the Task exists
-	var task models.Task
+	var task model.Task
 	if err := database.DB.First(&task, taskID).Error; err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
 		return
@@ -215,11 +215,16 @@ func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 		return
 	}
 
-	var uploadedImages []models.Image
-	for _, file := range files {
+	var uploadedImages []model.AppFile
+	folderPath := fmt.Sprintf("uploads/task-%d", taskID)
+	os.MkdirAll(folderPath, os.ModePerm)
+
+	for index, file := range files {
+
 		// Generate a unique filename based on the Task ID
-		filename := fmt.Sprintf("task-%d-%s", taskID, file.Filename)
-		savePath := filepath.Join("uploads", filename)
+		fileType := filepath.Ext(file.Filename)
+		filename := fmt.Sprintf("task-%d-%d%s", taskID, index, fileType)
+		savePath := filepath.Join(folderPath, filename)
 
 		// Save the file to disk
 		if err := ctx.SaveUploadedFile(file, savePath); err != nil {
@@ -228,7 +233,7 @@ func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 		}
 
 		// Save metadata to the database
-		image := models.Image{
+		image := model.AppFile{
 			Filename: filename,
 			Url:      fmt.Sprintf("/%s", savePath),
 			TaskID:   uint(taskID),
