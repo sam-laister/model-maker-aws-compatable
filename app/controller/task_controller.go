@@ -62,6 +62,46 @@ func (c *TaskController) GetTasks(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{"tasks": tasks})
 }
 
+func (c *TaskController) GetTask(ctx *gin.Context) {
+	// Extract API key from request header
+	apiKey := ctx.GetHeader("Authorization")
+	if apiKey == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "API key is missing"})
+		return
+	}
+
+	// Remove "Bearer " if present
+	apiKey = strings.TrimPrefix(apiKey, "Bearer ")
+
+	_, err := c.authService.FireAuth.VerifyIDToken(context.Background(), apiKey)
+	if err != nil {
+		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	// Get the Task ID from the route
+	taskIDParam := ctx.Param("taskID")
+	taskID, err := strconv.Atoi(taskIDParam)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID"})
+		return
+	}
+
+	task, err := repositories.GetTaskByID(taskID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Use Preload to eagerly load the Images relation
+	if err := database.DB.Preload("Images").First(&task, taskID).Error; err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		return
+	}
+
+	ctx.JSON(200, gin.H{"task": task})
+}
+
 func (c *TaskController) CreateTask(ctx *gin.Context) {
 
 	// Extract API key from request header

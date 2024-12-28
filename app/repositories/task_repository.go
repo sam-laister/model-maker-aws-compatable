@@ -15,6 +15,14 @@ func GetTasksByUser(user *models.User) ([]models.Task, error) {
 	return tasks, nil
 }
 
+func GetTaskByID(taskID int) (*models.Task, error) {
+	var task models.Task
+	if err := database.DB.Where("id = ?", taskID).First(&task).Error; err != nil {
+		return nil, err
+	}
+	return &task, nil
+}
+
 // CreateTask creates a new task in the database
 func CreateTask(task *models.Task) error {
 	if err := database.DB.Create(task).Error; err != nil {

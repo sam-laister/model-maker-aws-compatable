@@ -20,6 +20,7 @@ func NewRouter(
 	// Tasks
 	r.GET("/tasks", taskController.GetTasks)
 	r.POST("/tasks", taskController.CreateTask)
+	r.GET("/tasks/:taskID", taskController.GetTask)
 	r.POST("/tasks/:taskID/upload", taskController.UploadFileToTask)
 
 	// Uploads
