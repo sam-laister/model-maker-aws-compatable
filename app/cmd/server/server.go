@@ -46,9 +46,10 @@ func main() {
 	authController := controller.NewAuthController(authService)
 	taskController := controller.NewTaskController(authService)
 	uploadController := controller.NewUploadController(authService)
+	objectController := controller.NewObjectController(authService)
 
 	// Set up the HTTP router
-	r := router.NewRouter(authController, taskController, uploadController)
+	r := router.NewRouter(authController, taskController, uploadController, objectController)
 
 	// Start the server
 	r.Run(":3333")

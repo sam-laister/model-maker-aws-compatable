@@ -30,3 +30,10 @@ func CreateTask(task *models.Task) error {
 	}
 	return nil
 }
+
+func SaveTask(task *models.Task) error {
+	if err := database.DB.Save(task).Error; err != nil {
+		return err
+	}
+	return nil
+}

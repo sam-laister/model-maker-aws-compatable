@@ -3,8 +3,10 @@ package controller
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -54,18 +56,9 @@ func (c *TaskController) GetTasks(ctx *gin.Context) {
 		return
 	}
 
-	// Preload Images for all tasks
-	if err := database.DB.Preload("Images").Find(&tasks).Error; err != nil {
+	if err := database.DB.Preload("Images").Preload("Mesh").Find(&tasks).Error; err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch tasks"})
 		return
-	}
-
-	// add test mesh to all taskjs
-	for i := range tasks {
-		tasks[i].Mesh = model.AppFile{
-			Url:      "/objects/test_object.glb",
-			Filename: "test_object.glb",
-		}
 	}
 
 	ctx.JSON(200, gin.H{"tasks": tasks})
@@ -246,4 +239,117 @@ func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 		"message": "Files uploaded successfully",
 		"images":  uploadedImages,
 	})
+}
+
+func (c *TaskController) StartProcess(ctx *gin.Context) {
+
+	taskId := ctx.Param("taskID")
+	taskIdInt, err := strconv.Atoi(taskId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID"})
+		return
+	}
+
+	task, err := repositories.GetTaskByID(taskIdInt)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Task not found"})
+		return
+	}
+	task.Completed = false
+	if err := repositories.SaveTask(task); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update task"})
+		return
+	}
+
+	// Path to the executable
+	executablePath := "./cmd/photogrammetry"
+
+	var inputPath string = fmt.Sprintf("uploads/task-%s", taskId)
+	var buildPath string = fmt.Sprintf("objects/task-%s", taskId)
+
+	os.Mkdir(buildPath, os.ModePerm)
+
+	// Create the command
+	cmd := exec.Command(executablePath, inputPath, buildPath)
+
+	// Run the command in a goroutine
+	go func() {
+		log.Println("Starting process...")
+		log.Printf("Command: %v\n", cmd)
+
+		// // Start the command
+		// if err := cmd.Start(); err != nil {
+		// 	log.Printf("Failed to start process: %v\n", err)
+		// 	return
+		// }
+
+		// // Wait for the command to finish
+		// if err := cmd.Wait(); err != nil {
+		// 	log.Printf("Process finished with error: %v\n", err)
+		// 	return
+		// }
+
+		log.Println("Process completed successfully.")
+		StartConvertion(task)
+	}()
+
+	// Respond to the client immediately
+	ctx.JSON(http.StatusAccepted, gin.H{"message": "Process started."})
+}
+
+func StartConvertion(task *model.Task) {
+	task.Completed = true
+	if err := repositories.SaveTask(task); err != nil {
+		log.Printf("Failed to update task: %v\n", err)
+		return
+	}
+
+	log.Println("Task updated successfully.")
+
+	var inputPath string = fmt.Sprintf("./objects/task-%d/baked_mesh_c4d808da.usda", task.ID)
+	var buildPath string = fmt.Sprintf("./objects/task-%d/task-%d", task.ID, task.ID)
+
+	executablePath := "./cmd/usda_to_glb.sh"
+	cmd := exec.Command(executablePath, inputPath, buildPath)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	go func() {
+		log.Println("Starting convertion...")
+		log.Printf("Command: %v\n", cmd)
+
+		// Start the command
+		if err := cmd.Start(); err != nil {
+			log.Printf("Failed to start process: %v\n", err)
+			return
+		}
+
+		// Wait for the command to finish
+		if err := cmd.Wait(); err != nil {
+			log.Printf("Process finished with error: %v\n", err)
+			return
+		}
+
+		log.Println("Process completed successfully.")
+		mesh, err := repositories.SaveAppFile(&model.AppFile{
+			Url:      fmt.Sprintf("/objects/%d/task-%d.glb", task.ID, task.ID),
+			Filename: fmt.Sprintf("task-%d.glb", task.ID),
+			TaskID:   task.ID,
+		})
+
+		if err != nil {
+			log.Printf("Failed to save mesh: %v\n", err)
+			return
+		}
+
+		task.Mesh = *mesh
+		task.Completed = true
+
+		if err := repositories.SaveTask(task); err != nil {
+			log.Printf("Failed to update task: %v\n", err)
+			return
+		}
+
+		log.Println("Task updated successfully.")
+	}()
 }
