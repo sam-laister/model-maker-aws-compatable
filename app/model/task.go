@@ -14,5 +14,5 @@ type Task struct {
 	Completed   bool
 	UserID      uint
 	Images      []AppFile `gorm:"foreignKey:TaskID"`
-	Mesh        AppFile   `gorm:"foreignKey:TaskID"`
+	Mesh        *AppFile  `gorm:"foreignKey:TaskID"`
 }

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	repositories "github.com/Soup666/diss-api/repositories"
 	services "github.com/Soup666/diss-api/services"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type TaskController struct {
@@ -56,7 +58,7 @@ func (c *TaskController) GetTasks(ctx *gin.Context) {
 		return
 	}
 
-	if err := database.DB.Preload("Images").Preload("Mesh").Find(&tasks).Error; err != nil {
+	if err := database.DB.Preload("Mesh", "file_type = ?", "mesh").Find(&tasks).Error; err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch tasks"})
 		return
 	}
@@ -95,15 +97,22 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 		return
 	}
 
-	// Use Preload to eagerly load the Images relation
-	if err := database.DB.Preload("Images").First(&task, taskID).Error; err != nil {
+	if err := database.DB.Preload("Images", "file_type = ?", "upload").First(&task, taskID).Error; err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
 		return
 	}
 
-	task.Mesh = model.AppFile{
-		Url:      "/objects/test_object.glb",
-		Filename: "test_object.glb",
+	// Query for the Mesh relation separately
+	var mesh *model.AppFile
+	if err := database.DB.Where("task_id = ? AND file_type = ?", task.ID, "mesh").First(&mesh).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			task.Mesh = nil
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load Mesh"})
+			return
+		}
+	} else {
+		task.Mesh = mesh
 	}
 
 	ctx.JSON(200, gin.H{"task": task})
@@ -228,8 +237,9 @@ func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 		// Save metadata to the database
 		image := model.AppFile{
 			Filename: filename,
-			Url:      fmt.Sprintf("/%s", savePath),
+			Url:      fmt.Sprintf("/uploads/%d/%s", taskID, filename),
 			TaskID:   uint(taskID),
+			FileType: "upload",
 		}
 		database.DB.Create(&image)
 		uploadedImages = append(uploadedImages, image)
@@ -266,28 +276,31 @@ func (c *TaskController) StartProcess(ctx *gin.Context) {
 
 	var inputPath string = fmt.Sprintf("uploads/task-%s", taskId)
 	var buildPath string = fmt.Sprintf("objects/task-%s", taskId)
+	var buildFileName string = fmt.Sprintf("baked_mesh_%s.usdz", taskId)
 
 	os.Mkdir(buildPath, os.ModePerm)
 
 	// Create the command
-	cmd := exec.Command(executablePath, inputPath, buildPath)
+	cmd := exec.Command(executablePath, inputPath, fmt.Sprintf("%s/%s", buildPath, buildFileName))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
 	// Run the command in a goroutine
 	go func() {
 		log.Println("Starting process...")
 		log.Printf("Command: %v\n", cmd)
 
-		// // Start the command
-		// if err := cmd.Start(); err != nil {
-		// 	log.Printf("Failed to start process: %v\n", err)
-		// 	return
-		// }
+		// Start the command
+		if err := cmd.Start(); err != nil {
+			log.Printf("Failed to start process: %v\n", err)
+			return
+		}
 
-		// // Wait for the command to finish
-		// if err := cmd.Wait(); err != nil {
-		// 	log.Printf("Process finished with error: %v\n", err)
-		// 	return
-		// }
+		// Wait for the command to finish
+		if err := cmd.Wait(); err != nil {
+			log.Printf("Process finished with error: %v\n", err)
+			return
+		}
 
 		log.Println("Process completed successfully.")
 		StartConvertion(task)
@@ -306,7 +319,7 @@ func StartConvertion(task *model.Task) {
 
 	log.Println("Task updated successfully.")
 
-	var inputPath string = fmt.Sprintf("./objects/task-%d/baked_mesh_c4d808da.usda", task.ID)
+	var inputPath string = fmt.Sprintf("./objects/task-%d/baked_mesh_%d.usdz", task.ID, task.ID)
 	var buildPath string = fmt.Sprintf("./objects/task-%d/task-%d", task.ID, task.ID)
 
 	executablePath := "./cmd/usda_to_glb.sh"
@@ -335,6 +348,7 @@ func StartConvertion(task *model.Task) {
 			Url:      fmt.Sprintf("/objects/%d/task-%d.glb", task.ID, task.ID),
 			Filename: fmt.Sprintf("task-%d.glb", task.ID),
 			TaskID:   task.ID,
+			FileType: "mesh",
 		})
 
 		if err != nil {
@@ -342,7 +356,7 @@ func StartConvertion(task *model.Task) {
 			return
 		}
 
-		task.Mesh = *mesh
+		task.Mesh = mesh
 		task.Completed = true
 
 		if err := repositories.SaveTask(task); err != nil {

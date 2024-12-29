@@ -5,8 +5,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateFile(db *gorm.DB, taskID uint, url string, filename string) error {
-	return db.Create(&model.AppFile{TaskID: taskID, Url: url, Filename: filename}).Error
+func CreateFile(db *gorm.DB, taskID uint, url string, filename string, filetype string) error {
+	return db.Create(&model.AppFile{TaskID: taskID, Url: url, Filename: filename, FileType: filetype}).Error
 }
 
 var filenames = []string{
@@ -37,7 +37,7 @@ var filenames = []string{
 
 func CreateDummyFiles(db *gorm.DB) error {
 	for _, filename := range filenames {
-		if err := CreateFile(db, 1, "/uploads/1/"+filename, filename); err != nil {
+		if err := CreateFile(db, 1, "/uploads/1/"+filename, filename, "upload"); err != nil {
 			return err
 		}
 	}

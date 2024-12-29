@@ -9,4 +9,5 @@ type AppFile struct {
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 	TaskID    uint      `gorm:"not null"` // Foreign key
+	FileType  string    `gorm:"not null"`
 }
