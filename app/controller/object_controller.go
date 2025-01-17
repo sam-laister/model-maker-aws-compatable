@@ -5,18 +5,14 @@ import (
 	"net/http"
 	"os"
 
-	services "github.com/Soup666/diss-api/services"
-
 	"github.com/gin-gonic/gin"
 )
 
 // AuthController is the controller for handling authentication requests
-type ObjectController struct {
-	authService *services.AuthService
-}
+type ObjectController struct{}
 
-func NewObjectController(authService *services.AuthService) *ObjectController {
-	return &ObjectController{authService}
+func NewObjectController() *ObjectController {
+	return &ObjectController{}
 }
 
 func (c *ObjectController) GetObject(ctx *gin.Context) {

@@ -12,6 +12,8 @@ require (
 	gorm.io/gorm v1.25.12
 )
 
+require github.com/microsoft/go-mssqldb v1.8.0 // indirect
+
 require (
 	cel.dev/expr v0.16.2 // indirect
 	cloud.google.com/go v0.117.0 // indirect
@@ -101,4 +103,5 @@ require (
 	gorm.io/driver/mysql v1.5.7 // indirect
 	gorm.io/hints v1.1.2 // indirect
 	gorm.io/plugin/dbresolver v1.5.3 // indirect
+
 )

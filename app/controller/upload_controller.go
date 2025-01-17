@@ -1,47 +1,27 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/Soup666/diss-api/database"
 	models "github.com/Soup666/diss-api/model"
-	services "github.com/Soup666/diss-api/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 // AuthController is the controller for handling authentication requests
 type UploadController struct {
-	authService *services.AuthService
 }
 
-func NewUploadController(authService *services.AuthService) *UploadController {
-	return &UploadController{authService}
+func NewUploadController() *UploadController {
+	return &UploadController{}
 }
 
 func (c *UploadController) UploadFile(ctx *gin.Context) {
-
-	// Extract API key from request header
-	apiKey := ctx.GetHeader("Authorization")
-	if apiKey == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "API key is missing"})
-		return
-	}
-
-	// Remove "Bearer " if present
-	apiKey = strings.TrimPrefix(apiKey, "Bearer ")
-
-	_, err := c.authService.FireAuth.VerifyIDToken(context.Background(), apiKey)
-	if err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid token"})
-		return
-	}
 
 	file, header, err := ctx.Request.FormFile("file")
 	if err != nil {

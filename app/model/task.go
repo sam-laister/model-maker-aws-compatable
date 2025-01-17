@@ -12,6 +12,7 @@ type Task struct {
 	Title       string
 	Description string
 	Completed   bool
+	Status      TaskStatus `gorm:"type:TaskStatus"`
 	UserID      uint
 	Images      []AppFile `gorm:"foreignKey:TaskID"`
 	Mesh        *AppFile  `gorm:"foreignKey:TaskID"`

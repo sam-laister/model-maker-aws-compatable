@@ -2,6 +2,8 @@ package router
 
 import (
 	"github.com/Soup666/diss-api/controller"
+	"github.com/Soup666/diss-api/middleware"
+	"github.com/Soup666/diss-api/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,14 +13,16 @@ func NewRouter(
 	taskController *controller.TaskController,
 	uploadController *controller.UploadController,
 	objectController *controller.ObjectController,
+	authService *services.AuthServiceImpl,
 ) *gin.Engine {
-	// Create a new Gin router
+
 	r := gin.Default()
 
-	r.Use(CORSMiddleware())
+	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.AuthMiddleware(authService))
 
 	// Set up the authentication routes
-	r.GET("/login", authController.Login)
+	r.POST("/verify", authController.Verify)
 
 	// Tasks
 	r.GET("/tasks", taskController.GetTasks)
@@ -34,20 +38,4 @@ func NewRouter(
 	r.GET("/objects/:taskID/:filename", objectController.GetObject)
 
 	return r
-}
-
-func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	}
 }

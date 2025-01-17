@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -10,49 +9,29 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/Soup666/diss-api/database"
 	"github.com/Soup666/diss-api/model"
-	repositories "github.com/Soup666/diss-api/repositories"
 	services "github.com/Soup666/diss-api/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type TaskController struct {
-	authService *services.AuthService
+	TaskService    *services.TaskServiceImpl
+	AppFileService *services.AppFileServiceImpl
 }
 
-func NewTaskController(authService *services.AuthService) *TaskController {
-	return &TaskController{authService}
+func NewTaskController(taskService *services.TaskServiceImpl, appFileService *services.AppFileServiceImpl) *TaskController {
+	return &TaskController{TaskService: taskService, AppFileService: appFileService}
 }
 
 func (c *TaskController) GetTasks(ctx *gin.Context) {
 
-	// Extract API key from request header
-	apiKey := ctx.GetHeader("Authorization")
-	if apiKey == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "API key is missing"})
-		return
-	}
+	user := ctx.MustGet("user")
+	userId := user.(*model.User).ID
 
-	// Remove "Bearer " if present
-	apiKey = strings.TrimPrefix(apiKey, "Bearer ")
-
-	authToken, err := c.authService.FireAuth.VerifyIDToken(context.Background(), apiKey)
-	if err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid token"})
-		return
-	}
-
-	user, err := c.authService.Login(authToken.UID)
-	if err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
-		return
-	}
-
-	tasks, err := repositories.GetTasksByUser(user)
+	tasks, err := c.TaskService.GetTasks(userId)
 	if err != nil {
 		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
@@ -67,21 +46,6 @@ func (c *TaskController) GetTasks(ctx *gin.Context) {
 }
 
 func (c *TaskController) GetTask(ctx *gin.Context) {
-	// Extract API key from request header
-	apiKey := ctx.GetHeader("Authorization")
-	if apiKey == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "API key is missing"})
-		return
-	}
-
-	// Remove "Bearer " if present
-	apiKey = strings.TrimPrefix(apiKey, "Bearer ")
-
-	_, err := c.authService.FireAuth.VerifyIDToken(context.Background(), apiKey)
-	if err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid token"})
-		return
-	}
 
 	// Get the Task ID from the route
 	taskIDParam := ctx.Param("taskID")
@@ -91,7 +55,7 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 		return
 	}
 
-	task, err := repositories.GetTaskByID(taskID)
+	task, err := c.TaskService.GetTask(uint(taskID))
 	if err != nil {
 		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
@@ -120,27 +84,7 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 
 func (c *TaskController) CreateTask(ctx *gin.Context) {
 
-	// Extract API key from request header
-	apiKey := ctx.GetHeader("Authorization")
-	if apiKey == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "API key is missing"})
-		return
-	}
-
-	// Remove "Bearer " if present
-	apiKey = strings.TrimPrefix(apiKey, "Bearer ")
-
-	authToken, err := c.authService.FireAuth.VerifyIDToken(context.Background(), apiKey)
-	if err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid token"})
-		return
-	}
-
-	user, err := c.authService.Login(authToken.UID)
-	if err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
-		return
-	}
+	user := ctx.MustGet("user").(*model.User)
 
 	var taskData struct {
 		Title       string `json:"title"`
@@ -157,14 +101,14 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		return
 	}
 
-	task := model.Task{
+	task, err := c.TaskService.CreateTask(&model.Task{
 		Title:       taskData.Title,
 		Description: taskData.Description,
 		UserID:      user.ID,
 		Completed:   false,
-	}
+	})
 
-	if err := repositories.CreateTask(&task); err != nil {
+	if err != nil {
 		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
@@ -173,22 +117,6 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 }
 
 func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
-
-	// Extract API key from request header
-	apiKey := ctx.GetHeader("Authorization")
-	if apiKey == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "API key is missing"})
-		return
-	}
-
-	// Remove "Bearer " if present
-	apiKey = strings.TrimPrefix(apiKey, "Bearer ")
-
-	_, err := c.authService.FireAuth.VerifyIDToken(context.Background(), apiKey)
-	if err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid token"})
-		return
-	}
 
 	// Get the Task ID from the route
 	taskIDParam := ctx.Param("taskID")
@@ -260,13 +188,13 @@ func (c *TaskController) StartProcess(ctx *gin.Context) {
 		return
 	}
 
-	task, err := repositories.GetTaskByID(taskIdInt)
+	task, err := c.TaskService.GetTask(uint(taskIdInt))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Task not found"})
 		return
 	}
 	task.Completed = false
-	if err := repositories.SaveTask(task); err != nil {
+	if err := c.TaskService.SaveTask(task); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update task"})
 		return
 	}
@@ -303,67 +231,63 @@ func (c *TaskController) StartProcess(ctx *gin.Context) {
 		}
 
 		log.Println("Process completed successfully.")
-		StartConvertion(task)
-	}()
-
-	// Respond to the client immediately
-	ctx.JSON(http.StatusAccepted, gin.H{"message": "Process started."})
-}
-
-func StartConvertion(task *model.Task) {
-	task.Completed = true
-	if err := repositories.SaveTask(task); err != nil {
-		log.Printf("Failed to update task: %v\n", err)
-		return
-	}
-
-	log.Println("Task updated successfully.")
-
-	var inputPath string = fmt.Sprintf("./objects/task-%d/baked_mesh_%d.usdz", task.ID, task.ID)
-	var buildPath string = fmt.Sprintf("./objects/task-%d/task-%d", task.ID, task.ID)
-
-	executablePath := "./cmd/usda_to_glb.sh"
-	cmd := exec.Command(executablePath, inputPath, buildPath)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	go func() {
-		log.Println("Starting convertion...")
-		log.Printf("Command: %v\n", cmd)
-
-		// Start the command
-		if err := cmd.Start(); err != nil {
-			log.Printf("Failed to start process: %v\n", err)
-			return
-		}
-
-		// Wait for the command to finish
-		if err := cmd.Wait(); err != nil {
-			log.Printf("Process finished with error: %v\n", err)
-			return
-		}
-
-		log.Println("Process completed successfully.")
-		mesh, err := repositories.SaveAppFile(&model.AppFile{
-			Url:      fmt.Sprintf("/objects/%d/task-%d.glb", task.ID, task.ID),
-			Filename: fmt.Sprintf("task-%d.glb", task.ID),
-			TaskID:   task.ID,
-			FileType: "mesh",
-		})
-
-		if err != nil {
-			log.Printf("Failed to save mesh: %v\n", err)
-			return
-		}
-
-		task.Mesh = mesh
 		task.Completed = true
-
-		if err := repositories.SaveTask(task); err != nil {
+		if _, err := c.TaskService.UpdateTask(task); err != nil {
 			log.Printf("Failed to update task: %v\n", err)
 			return
 		}
 
 		log.Println("Task updated successfully.")
+
+		var inputPath string = fmt.Sprintf("./objects/task-%d/baked_mesh_%d.usdz", task.ID, task.ID)
+		var buildPath string = fmt.Sprintf("./objects/task-%d/task-%d", task.ID, task.ID)
+
+		executablePath := "./cmd/usda_to_glb.sh"
+		cmd := exec.Command(executablePath, inputPath, buildPath)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		go func() {
+			log.Println("Starting convertion...")
+			log.Printf("Command: %v\n", cmd)
+
+			// Start the command
+			if err := cmd.Start(); err != nil {
+				log.Printf("Failed to start process: %v\n", err)
+				return
+			}
+
+			// Wait for the command to finish
+			if err := cmd.Wait(); err != nil {
+				log.Printf("Process finished with error: %v\n", err)
+				return
+			}
+
+			log.Println("Process completed successfully.")
+			mesh, err := c.AppFileService.Save(&model.AppFile{
+				Url:      fmt.Sprintf("/objects/%d/task-%d.glb", task.ID, task.ID),
+				Filename: fmt.Sprintf("task-%d.glb", task.ID),
+				TaskID:   task.ID,
+				FileType: "mesh",
+			})
+
+			if err != nil {
+				log.Printf("Failed to save mesh: %v\n", err)
+				return
+			}
+
+			task.Mesh = mesh
+			task.Completed = true
+
+			if _, err := c.TaskService.UpdateTask(task); err != nil {
+				log.Printf("Failed to update task: %v\n", err)
+				return
+			}
+
+			log.Println("Task updated successfully.")
+		}()
 	}()
+
+	// Respond to the client immediately
+	ctx.JSON(http.StatusAccepted, gin.H{"message": "Process started."})
 }

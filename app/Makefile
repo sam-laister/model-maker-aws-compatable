@@ -1,0 +1,19 @@
+include .env
+
+run: 
+	@go run main.go
+
+build:
+	@go build -o bin/app .
+
+seed:
+	@go run cmd/seed/main.go
+
+db-status:
+	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(DATABASE_URL) goose -dir=$(MIGRATION_PATH) status
+
+up:
+	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(DATABASE_URL) goose -dir=$(MIGRATION_PATH) up
+
+reset:
+	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(DATABASE_URL) goose -dir=$(MIGRATION_PATH) reset
