@@ -30,3 +30,5 @@ service-account-key.json
 
 objects/
 app/uploads/
+
+bin/app
