@@ -18,24 +18,27 @@ func NewRouter(
 
 	r := gin.Default()
 
+	// Global middlewares
 	r.Use(middleware.CORSMiddleware())
-	r.Use(middleware.AuthMiddleware(authService))
 
-	// Set up the authentication routes
+	// Authenticated routes
+	authRequired := r.Group("/")
+	authRequired.Use(middleware.AuthMiddleware(authService))
+
+	// Authentication routes
 	r.POST("/verify", authController.Verify)
 	r.PATCH("/verify", authController.Verify)
 
-	// Tasks
-	r.GET("/tasks", taskController.GetTasks)
-	r.POST("/tasks", taskController.CreateTask)
-	r.GET("/tasks/:taskID", taskController.GetTask)
-	r.POST("/tasks/:taskID/upload", taskController.UploadFileToTask)
-	r.POST("/tasks/:taskID/start", taskController.StartProcess)
+	// Tasks (protected by AuthMiddleware)
+	authRequired.GET("/tasks", taskController.GetTasks)
+	authRequired.POST("/tasks", taskController.CreateTask)
+	authRequired.GET("/tasks/:taskID", taskController.GetTask)
+	authRequired.POST("/tasks/:taskID/upload", taskController.UploadFileToTask)
+	authRequired.POST("/tasks/:taskID/start", taskController.StartProcess)
 
-	// Uploads
+	// Unauthenticated routes
 	r.POST("/uploads", uploadController.UploadFile)
 	r.GET("/uploads/:taskId/:filename", uploadController.GetFile)
-
 	r.GET("/objects/:taskID/:filename", objectController.GetObject)
 
 	return r

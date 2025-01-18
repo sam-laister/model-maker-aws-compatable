@@ -18,7 +18,7 @@ func (repo *TaskRepositoryImpl) GetTasksByUser(userID uint) ([]models.Task, erro
 	// Fetch tasks related to the user
 	var tasks []models.Task
 	if err := database.DB.Where("user_id = ?", userID).Find(&tasks).Error; err != nil {
-		return nil, nil
+		return nil, err
 	}
 	return tasks, nil
 }

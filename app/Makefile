@@ -6,8 +6,8 @@ run:
 build:
 	@go build -o bin/app .
 
-seed:
-	@go run cmd/seed/main.go
+run-seed:
+	@go run seeder/seeder.go
 
 db-status:
 	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(DATABASE_URL) goose -dir=$(MIGRATION_PATH) status

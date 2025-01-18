@@ -10,7 +10,7 @@ func All() []seed.Seed {
 		{
 			Name: "CreateTestUser",
 			Run: func(db *gorm.DB) error {
-				return CreateUser(db, "Test User", "iDDEmcoS2lR9QlyXtEb8UfURmuZ2")
+				return CreateUser(db, "Test User", "KQmrXe88TwebIMh6AkbEV251Aec2")
 			},
 		},
 		{

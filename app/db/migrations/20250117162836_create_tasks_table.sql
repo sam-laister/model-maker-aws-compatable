@@ -18,22 +18,13 @@ CREATE TABLE IF NOT EXISTS tasks (
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     status TaskStatus NOT NULL DEFAULT 'INITIAL',
     user_id INT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
--- Create a table for app files
-CREATE TABLE app_files (
-    id SERIAL PRIMARY KEY,
-    task_id INT REFERENCES tasks (id) ON DELETE CASCADE,
-    file_path TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
 -- Drop the app_files table
-DROP TABLE IF EXISTS app_files;
 
 -- Drop the tasks table
 DROP TABLE IF EXISTS tasks;

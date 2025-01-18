@@ -11,11 +11,11 @@ const (
 	INITIAL    TaskStatus = "INITIAL"
 )
 
-func (self *TaskStatus) Scan(value interface{}) error {
-	*self = TaskStatus(value.([]byte))
+func (ts *TaskStatus) Scan(value interface{}) error {
+	*ts = TaskStatus(value.(string))
 	return nil
 }
 
-func (self TaskStatus) Value() (driver.Value, error) {
-	return string(self), nil
+func (ts TaskStatus) Value() (driver.Value, error) {
+	return string(ts), nil
 }

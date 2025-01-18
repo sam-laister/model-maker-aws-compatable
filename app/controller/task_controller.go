@@ -106,6 +106,7 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		Description: taskData.Description,
 		UserID:      user.ID,
 		Completed:   false,
+		Status:      "INITIAL",
 	})
 
 	if err != nil {
