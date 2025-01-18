@@ -18,11 +18,11 @@ import (
 )
 
 type TaskController struct {
-	TaskService    *services.TaskServiceImpl
-	AppFileService *services.AppFileServiceImpl
+	TaskService    services.TaskService
+	AppFileService services.AppFileService
 }
 
-func NewTaskController(taskService *services.TaskServiceImpl, appFileService *services.AppFileServiceImpl) *TaskController {
+func NewTaskController(taskService services.TaskService, appFileService services.AppFileService) *TaskController {
 	return &TaskController{TaskService: taskService, AppFileService: appFileService}
 }
 

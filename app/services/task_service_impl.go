@@ -74,3 +74,12 @@ func (s *TaskServiceImpl) SaveTask(task *models.Task) error {
 	}
 	return nil
 }
+
+func (s *TaskServiceImpl) DeleteTask(taskID *models.Task) error {
+	err := s.taskRepo.ArchiveTask(taskID)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}

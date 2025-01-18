@@ -8,10 +8,10 @@ import (
 
 // AuthController is the controller for handling authentication requests
 type AuthController struct {
-	authService *services.AuthServiceImpl
+	authService services.AuthService
 }
 
-func NewAuthController(authService *services.AuthServiceImpl) *AuthController {
+func NewAuthController(authService services.AuthService) *AuthController {
 	return &AuthController{authService}
 }
 

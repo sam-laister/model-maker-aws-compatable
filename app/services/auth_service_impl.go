@@ -43,12 +43,12 @@ func (s *AuthServiceImpl) Verify(token string) (*model.User, error) {
 		})
 
 		if err != nil {
-			return nil, err
+			return nil, errors.New("unable to verify user")
 		}
 
 		return user, nil
 	} else if err != nil {
-		return nil, err
+		return nil, errors.New("unable to verify user")
 	}
 
 	return user, nil

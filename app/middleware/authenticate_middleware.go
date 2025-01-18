@@ -9,7 +9,7 @@ import (
 )
 
 // AuthMiddleware checks the header for a valid API token
-func AuthMiddleware(authService *services.AuthServiceImpl) gin.HandlerFunc {
+func AuthMiddleware(authService services.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the `Authorization` header
 		authHeader := c.GetHeader("Authorization")
@@ -25,6 +25,7 @@ func AuthMiddleware(authService *services.AuthServiceImpl) gin.HandlerFunc {
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 
 		authToken, err := authService.ValidateToken(token)
+
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token validation failed"})
 			c.Abort()
@@ -32,6 +33,7 @@ func AuthMiddleware(authService *services.AuthServiceImpl) gin.HandlerFunc {
 		}
 
 		user, err := authService.Verify(authToken.UID)
+
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unable to verify user"})
 			c.Abort()
