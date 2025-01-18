@@ -23,6 +23,7 @@ func NewRouter(
 
 	// Set up the authentication routes
 	r.POST("/verify", authController.Verify)
+	r.PATCH("/verify", authController.Verify)
 
 	// Tasks
 	r.GET("/tasks", taskController.GetTasks)

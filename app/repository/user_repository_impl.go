@@ -26,5 +26,9 @@ func (repo *UserRepositoryImpl) GetUserFromFirebaseUID(apiKey string) (*models.U
 }
 
 func (repo *UserRepositoryImpl) Create(user *models.User) error {
-	return repo.DB.Create(user).Error
+	return repo.DB.Create(&user).Error
+}
+
+func (repo *UserRepositoryImpl) UpdateUser(user *models.User) error {
+	return repo.DB.Save(&user).Error
 }

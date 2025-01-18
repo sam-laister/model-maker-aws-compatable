@@ -31,3 +31,7 @@ func (s *UserServiceImpl) GetUserFromFirebaseUID(apiKey string) (*models.User, e
 	}
 	return user, nil
 }
+
+func (s *UserServiceImpl) UpdateUser(user *models.User) error {
+	return s.userRepo.UpdateUser(user)
+}

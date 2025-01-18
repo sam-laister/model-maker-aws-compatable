@@ -36,11 +36,13 @@ func (s *AuthServiceImpl) Verify(token string) (*model.User, error) {
 
 	user, err := s.userRepo.GetUserFromFirebaseUID(token)
 
-	if err == gorm.ErrRecordNotFound {
-		// Create blank user if not found
-		err := s.userRepo.Create(&model.User{
+	if err == gorm.ErrRecordNotFound || user == nil {
+		user := &model.User{
 			FirebaseUid: token,
-		})
+		}
+
+		// Create blank user if not found
+		err := s.userRepo.Create(user)
 
 		if err != nil {
 			return nil, errors.New("unable to verify user")
