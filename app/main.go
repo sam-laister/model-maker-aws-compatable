@@ -56,5 +56,5 @@ func main() {
 	r := router.NewRouter(authController, taskController, uploadController, objectController, authService)
 
 	// Start the server
-	r.Run(":3333")
+	r.Run(":" + os.Getenv("PORT"))
 }
