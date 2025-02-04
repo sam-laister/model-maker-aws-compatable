@@ -1,0 +1,111 @@
+definitions:
+  controller.CreateTaskRequest:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    required:
+    - description
+    - title
+    type: object
+  model.AppFile:
+    properties:
+      createdAt:
+        type: string
+      fileType:
+        type: string
+      filename:
+        type: string
+      id:
+        type: integer
+      taskID:
+        description: Foreign key
+        type: integer
+      updatedAt:
+        type: string
+      url:
+        type: string
+    type: object
+  model.Task:
+    properties:
+      completed:
+        type: boolean
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      images:
+        items:
+          $ref: '#/definitions/model.AppFile'
+        type: array
+      mesh:
+        $ref: '#/definitions/model.AppFile'
+      status:
+        $ref: '#/definitions/model.TaskStatus'
+      title:
+        type: string
+      updatedAt:
+        type: string
+      userID:
+        type: integer
+    type: object
+  model.TaskStatus:
+    enum:
+    - SUCCESS
+    - INPROGRESS
+    - FAILED
+    - INITIAL
+    type: string
+    x-enum-varnames:
+    - SUCCESS
+    - INPROGRESS
+    - FAILED
+    - INITIAL
+info:
+  contact: {}
+paths:
+  /tasks:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new task for the authenticated user
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Task data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controller.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Task'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new task
+      tags:
+      - tasks
+swagger: "2.0"

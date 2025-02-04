@@ -4,8 +4,11 @@ import (
 	"github.com/Soup666/diss-api/controller"
 	"github.com/Soup666/diss-api/middleware"
 	"github.com/Soup666/diss-api/services"
-
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "github.com/Soup666/diss-api/docs"
 )
 
 func NewRouter(
@@ -21,13 +24,16 @@ func NewRouter(
 	// Global middlewares
 	r.Use(middleware.CORSMiddleware())
 
+	// Swagger route
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Authenticated routes
 	authRequired := r.Group("/")
 	authRequired.Use(middleware.AuthMiddleware(authService))
 
 	// Authentication routes
-	r.POST("/verify", authController.Verify)
-	r.PATCH("/verify", authController.Verify)
+	authRequired.POST("/verify", authController.Verify)
+	authRequired.PATCH("/verify", authController.Verify)
 
 	// Tasks (protected by AuthMiddleware)
 	authRequired.GET("/tasks", taskController.GetTasks)

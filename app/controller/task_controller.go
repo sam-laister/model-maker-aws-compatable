@@ -82,39 +82,51 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{"task": task})
 }
 
-func (c *TaskController) CreateTask(ctx *gin.Context) {
+// CreateTaskRequest
+type CreateTaskRequest struct {
+	Title       string `json:"title" binding:"required"`
+	Description string `json:"description" binding:"required"`
+}
 
+// CreateTask handles task creation
+// @Summary Create a new task
+// @Description Creates a new task for the authenticated user
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer Token"
+// @Param request body CreateTaskRequest true "Task data"
+// @Success 201 {object} model.Task
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tasks [post]
+func (c *TaskController) CreateTask(ctx *gin.Context) {
 	user := ctx.MustGet("user").(*model.User)
 
-	var taskData struct {
-		Title       string `json:"title"`
-		Description string `json:"description"`
-	}
+	var req CreateTaskRequest
 
-	if err := ctx.ShouldBindJSON(&taskData); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	if taskData.Title == "" || taskData.Description == "" {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": "Title and Description are required"})
-		return
-	}
-
-	task, err := c.TaskService.CreateTask(&model.Task{
-		Title:       taskData.Title,
-		Description: taskData.Description,
+	task := &model.Task{
+		Title:       req.Title,
+		Description: req.Description,
 		UserID:      user.ID,
 		Completed:   false,
 		Status:      "INITIAL",
-	})
+	}
+
+	createdTask, err := c.TaskService.CreateTask(task)
 
 	if err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		log.Printf("Error creating task: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task"})
 		return
 	}
 
-	ctx.JSON(200, gin.H{"task": task})
+	ctx.JSON(http.StatusCreated, gin.H{"task": createdTask})
 }
 
 func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
@@ -201,7 +213,7 @@ func (c *TaskController) StartProcess(ctx *gin.Context) {
 	}
 
 	// Path to the executable
-	executablePath := "./cmd/photogrammetry"
+	executablePath := "./cmd/HelloPhotogrammetry"
 
 	var inputPath string = fmt.Sprintf("uploads/task-%s", taskId)
 	var buildPath string = fmt.Sprintf("objects/task-%s", taskId)
