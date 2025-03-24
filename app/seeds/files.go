@@ -6,7 +6,7 @@ import (
 )
 
 func CreateFile(db *gorm.DB, taskID uint, url string, filename string, filetype string) error {
-	return db.Create(&model.AppFile{TaskID: taskID, Url: url, Filename: filename, FileType: filetype}).Error
+	return db.Create(&model.AppFile{TaskId: taskID, Url: url, Filename: filename, FileType: filetype}).Error
 }
 
 var filenames = []string{

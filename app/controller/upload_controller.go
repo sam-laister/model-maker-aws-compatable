@@ -60,7 +60,7 @@ func (c *UploadController) GetFile(ctx *gin.Context) {
 	filename := ctx.Param("filename")
 
 	// Construct the full file path
-	filePath := fmt.Sprintf("uploads/task-%s/%s", taskId, filename)
+	filePath := fmt.Sprintf("uploads/%s/%s", taskId, filename)
 
 	// Check if the file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {

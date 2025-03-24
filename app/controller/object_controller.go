@@ -16,11 +16,10 @@ func NewObjectController() *ObjectController {
 }
 
 func (c *ObjectController) GetObject(ctx *gin.Context) {
-	filename := ctx.Param("filename")
 	taskId := ctx.Param("taskID")
 
 	// Construct the full file path
-	filePath := fmt.Sprintf("objects/task-%s/%s", taskId, filename)
+	filePath := fmt.Sprintf("objects/%s/%s", taskId, "mvs/final_model.glb")
 
 	// Check if the file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {

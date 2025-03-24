@@ -44,17 +44,22 @@ func main() {
 	// Set up the authentication service
 	authService := services.NewAuthService(authClient, db.DB, userRepo)
 	userService := services.NewUserService(userRepo)
-	taskService := services.NewTaskService(taskRepo)
 	appFileService := services.NewAppFileServiceFile(appFileRepo)
+	taskService := services.NewTaskService(taskRepo, appFileService)
+	visionService := services.NewVisionService()
 
 	authController := controller.NewAuthController(authService, userService)
-	taskController := controller.NewTaskController(taskService, appFileService)
+	taskController := controller.NewTaskController(taskService, appFileService, visionService)
 	uploadController := controller.NewUploadController()
 	objectController := controller.NewObjectController()
+	visionController := controller.NewVisionController(visionService, taskRepo, taskService)
 
 	// Set up the HTTP router
-	r := router.NewRouter(authController, taskController, uploadController, objectController, authService)
+	r := router.NewRouter(authController, taskController, uploadController, objectController, visionController, authService)
 
 	// Start the server
-	r.Run(":" + os.Getenv("PORT"))
+	if r.Run(":"+os.Getenv("PORT")) != nil {
+		panic("[Error] failed to start Gin server due to: " + err.Error())
+	}
+
 }

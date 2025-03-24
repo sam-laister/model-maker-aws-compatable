@@ -11,4 +11,8 @@ type TaskService interface {
 	UpdateTask(task *model.Task) (*model.Task, error)
 	DeleteTask(taskID *model.Task) error
 	SaveTask(task *model.Task) error
+	FailTask(task *model.Task) error
+	RunPhotogrammetryProcess(task *model.Task) error
+	UpdateMeta(task *model.Task, key string, value interface{}) error
+	FullyLoadTask(task *model.Task) (*model.Task, error)
 }

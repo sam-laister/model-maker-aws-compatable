@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/Soup666/diss-api/database"
 	"github.com/Soup666/diss-api/model"
@@ -20,16 +22,17 @@ import (
 type TaskController struct {
 	TaskService    services.TaskService
 	AppFileService services.AppFileService
+	VisionService  services.VisionService
 }
 
-func NewTaskController(taskService services.TaskService, appFileService services.AppFileService) *TaskController {
-	return &TaskController{TaskService: taskService, AppFileService: appFileService}
+func NewTaskController(taskService services.TaskService, appFileService services.AppFileService, visionService services.VisionService) *TaskController {
+	return &TaskController{TaskService: taskService, AppFileService: appFileService, VisionService: visionService}
 }
 
 func (c *TaskController) GetTasks(ctx *gin.Context) {
 
 	user := ctx.MustGet("user")
-	userId := user.(*model.User).ID
+	userId := user.(*model.User).Id
 
 	tasks, err := c.TaskService.GetTasks(userId)
 	if err != nil {
@@ -37,6 +40,7 @@ func (c *TaskController) GetTasks(ctx *gin.Context) {
 		return
 	}
 
+	// I dont like this being in a controller, but time constraints
 	if err := database.DB.Preload("Mesh", "file_type = ?", "mesh").Find(&tasks).Error; err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch tasks"})
 		return
@@ -61,31 +65,10 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 		return
 	}
 
-	if err := database.DB.Preload("Images", "file_type = ?", "upload").First(&task, taskID).Error; err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
-		return
-	}
-
-	// Query for the Mesh relation separately
-	var mesh *model.AppFile
-	if err := database.DB.Where("task_id = ? AND file_type = ?", task.ID, "mesh").First(&mesh).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			task.Mesh = nil
-		} else {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load Mesh"})
-			return
-		}
-	} else {
-		task.Mesh = mesh
-	}
+	// Load relations
+	c.TaskService.FullyLoadTask(task)
 
 	ctx.JSON(200, gin.H{"task": task})
-}
-
-// CreateTaskRequest
-type CreateTaskRequest struct {
-	Title       string `json:"title" binding:"required"`
-	Description string `json:"description" binding:"required"`
 }
 
 // CreateTask handles task creation
@@ -94,8 +77,8 @@ type CreateTaskRequest struct {
 // @Tags tasks
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer Token"
 // @Param request body CreateTaskRequest true "Task data"
+// @Security BearerAuth
 // @Success 201 {object} model.Task
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
@@ -103,17 +86,10 @@ type CreateTaskRequest struct {
 func (c *TaskController) CreateTask(ctx *gin.Context) {
 	user := ctx.MustGet("user").(*model.User)
 
-	var req CreateTaskRequest
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": "Invalid request body"})
-		return
-	}
-
 	task := &model.Task{
-		Title:       req.Title,
-		Description: req.Description,
-		UserID:      user.ID,
+		Title:       "",
+		Description: "", // Overriden by ai-description
+		UserId:      user.Id,
 		Completed:   false,
 		Status:      "INITIAL",
 	}
@@ -129,11 +105,25 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"task": createdTask})
 }
 
+// UploadFileToTask handles file uploads for a task
+// @Summary Upload files to a task
+// @Description Uploads files to a task
+// @Tags tasks
+// @Accept json
+// @Produce json
+// Security BearerAuth
+// @Param taskID path string true "Task ID"
+// @Param files formData file true "Files to upload"
+// @Success 201 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tasks/{taskID}/upload [post]
 func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 
 	// Get the Task ID from the route
-	taskIDParam := ctx.Param("taskID")
-	taskID, err := strconv.Atoi(taskIDParam)
+	taskIdParam := ctx.Param("taskID")
+	taskId, err := strconv.Atoi(taskIdParam)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID"})
 		return
@@ -141,7 +131,7 @@ func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 
 	// Check if the Task exists
 	var task model.Task
-	if err := database.DB.First(&task, taskID).Error; err != nil {
+	if err := database.DB.First(&task, taskId).Error; err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
 		return
 	}
@@ -158,33 +148,100 @@ func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 		return
 	}
 
+	// Define the upload folder
+	folderPath := fmt.Sprintf("uploads/%d", taskId)
+	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
+		return
+	}
+
 	var uploadedImages []model.AppFile
-	folderPath := fmt.Sprintf("uploads/task-%d", taskID)
-	os.MkdirAll(folderPath, os.ModePerm)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var hasError bool
+
+	// Use transactions for better consistency
+	tx := database.DB.Begin()
 
 	for index, file := range files {
+		wg.Add(1)
+		go func(index int, file *multipart.FileHeader) {
+			defer wg.Done()
 
-		// Generate a unique filename based on the Task ID
-		fileType := filepath.Ext(file.Filename)
-		filename := fmt.Sprintf("task-%d-%d%s", taskID, index, fileType)
-		savePath := filepath.Join(folderPath, filename)
+			// Validate file extension
+			fileExt := strings.ToLower(filepath.Ext(file.Filename))
+			if fileExt != ".jpg" && fileExt != ".jpeg" && fileExt != ".png" {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type"})
+				hasError = true
+				return
+			}
 
-		// Save the file to disk
-		if err := ctx.SaveUploadedFile(file, savePath); err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to save file %s", file.Filename)})
+			// Generate a unique filename
+			filename := fmt.Sprintf("%d-%d%s", taskId, index, fileExt)
+			savePath := filepath.Join(folderPath, filename)
+
+			// Save the file
+			if err := ctx.SaveUploadedFile(file, savePath); err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to save file %s", file.Filename)})
+				hasError = true
+				return
+			}
+
+			// Save metadata to DB
+			image := model.AppFile{
+				Filename: filename,
+				Url:      fmt.Sprintf("/uploads/%d/%s", taskId, filename),
+				TaskId:   uint(taskId),
+				FileType: "upload",
+			}
+
+			mu.Lock()
+			if err := tx.Create(&image).Error; err != nil {
+				hasError = true
+			} else {
+				uploadedImages = append(uploadedImages, image)
+			}
+			mu.Unlock()
+		}(index, file)
+	}
+
+	wg.Wait()
+
+	if hasError {
+		tx.Rollback()
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload some files"})
+		return
+	}
+
+	tx.Commit()
+
+	go func() {
+		// Generate caption
+		result, err := c.VisionService.AnalyseImage(fmt.Sprintf("./uploads/%d/%s", taskId, uploadedImages[0].Filename), "")
+
+		if err != nil {
+			log.Printf("Unable to analyze the image: %v", err)
 			return
 		}
 
-		// Save metadata to the database
-		image := model.AppFile{
-			Filename: filename,
-			Url:      fmt.Sprintf("/uploads/%d/%s", taskID, filename),
-			TaskID:   uint(taskID),
-			FileType: "upload",
+		if err := c.TaskService.UpdateMeta(&task, "ai-description", result); err != nil {
+			log.Printf("Failed to update task metadata: %v", err)
 		}
-		database.DB.Create(&image)
-		uploadedImages = append(uploadedImages, image)
-	}
+	}()
+
+	go func() {
+		// Generate caption
+		result, err := c.VisionService.AnalyseImage(fmt.Sprintf("./uploads/%d/%s", taskId, uploadedImages[0].Filename), "categorize the model in this image, use one word only")
+
+		if err != nil {
+			log.Printf("Unable to analyze the image: %v", err)
+			return
+		}
+
+		if err := c.TaskService.UpdateMeta(&task, "ai-title", result); err != nil {
+			log.Printf("Failed to update task metadata: %v", err)
+		}
+	}()
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Files uploaded successfully",
@@ -192,6 +249,20 @@ func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 	})
 }
 
+// StartProcess handles the process of starting the photogrammetry process
+// @Summary Upload files to a task
+// @Description Uploads files to a task
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer Token"
+// @Param request body CreateTaskRequest true "Task data"
+// @Param taskID path string true "Task ID"
+// @Success 201 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tasks/{taskID}/start [post]
 func (c *TaskController) StartProcess(ctx *gin.Context) {
 
 	taskId := ctx.Param("taskID")
@@ -203,104 +274,23 @@ func (c *TaskController) StartProcess(ctx *gin.Context) {
 
 	task, err := c.TaskService.GetTask(uint(taskIdInt))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Task not found"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		} else {
+			log.Printf("Error retrieving task: %v", err)
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
 		return
 	}
+
 	task.Completed = false
 	if err := c.TaskService.SaveTask(task); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update task"})
 		return
 	}
 
-	// Path to the executable
-	executablePath := "./cmd/HelloPhotogrammetry"
-
-	var inputPath string = fmt.Sprintf("uploads/task-%s", taskId)
-	var buildPath string = fmt.Sprintf("objects/task-%s", taskId)
-	var buildFileName string = fmt.Sprintf("baked_mesh_%s.usdz", taskId)
-
-	os.Mkdir(buildPath, os.ModePerm)
-
-	// Create the command
-	cmd := exec.Command(executablePath, inputPath, fmt.Sprintf("%s/%s", buildPath, buildFileName))
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// Run the command in a goroutine
-	go func() {
-		log.Println("Starting process...")
-		log.Printf("Command: %v\n", cmd)
-
-		// Start the command
-		if err := cmd.Start(); err != nil {
-			log.Printf("Failed to start process: %v\n", err)
-			return
-		}
-
-		// Wait for the command to finish
-		if err := cmd.Wait(); err != nil {
-			log.Printf("Process finished with error: %v\n", err)
-			return
-		}
-
-		log.Println("Process completed successfully.")
-		task.Completed = true
-		if _, err := c.TaskService.UpdateTask(task); err != nil {
-			log.Printf("Failed to update task: %v\n", err)
-			return
-		}
-
-		log.Println("Task updated successfully.")
-
-		var inputPath string = fmt.Sprintf("./objects/task-%d/baked_mesh_%d.usdz", task.ID, task.ID)
-		var buildPath string = fmt.Sprintf("./objects/task-%d/task-%d", task.ID, task.ID)
-
-		executablePath := "./cmd/usda_to_glb.sh"
-		cmd := exec.Command(executablePath, inputPath, buildPath)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		go func() {
-			log.Println("Starting convertion...")
-			log.Printf("Command: %v\n", cmd)
-
-			// Start the command
-			if err := cmd.Start(); err != nil {
-				log.Printf("Failed to start process: %v\n", err)
-				return
-			}
-
-			// Wait for the command to finish
-			if err := cmd.Wait(); err != nil {
-				log.Printf("Process finished with error: %v\n", err)
-				return
-			}
-
-			log.Println("Process completed successfully.")
-			mesh, err := c.AppFileService.Save(&model.AppFile{
-				Url:      fmt.Sprintf("/objects/%d/task-%d.glb", task.ID, task.ID),
-				Filename: fmt.Sprintf("task-%d.glb", task.ID),
-				TaskID:   task.ID,
-				FileType: "mesh",
-			})
-
-			if err != nil {
-				log.Printf("Failed to save mesh: %v\n", err)
-				return
-			}
-
-			task.Mesh = mesh
-			task.Completed = true
-
-			if _, err := c.TaskService.UpdateTask(task); err != nil {
-				log.Printf("Failed to update task: %v\n", err)
-				return
-			}
-
-			log.Println("Task updated successfully.")
-		}()
-	}()
-
 	// Respond to the client immediately
 	ctx.JSON(http.StatusAccepted, gin.H{"message": "Process started."})
+
+	go c.TaskService.RunPhotogrammetryProcess(task)
 }

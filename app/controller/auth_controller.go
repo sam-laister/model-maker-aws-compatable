@@ -3,7 +3,6 @@ package controller
 import (
 	"net/http"
 
-	"github.com/Soup666/diss-api/model"
 	models "github.com/Soup666/diss-api/model"
 	services "github.com/Soup666/diss-api/services"
 
@@ -42,7 +41,7 @@ func (c *AuthController) Verify(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"user": user})
 
 	case http.MethodPatch:
-		user := ctx.MustGet("user").(*model.User)
+		user := ctx.MustGet("user").(*models.User)
 
 		var userUpdate models.User
 		if err := ctx.ShouldBindJSON(&userUpdate); err != nil {

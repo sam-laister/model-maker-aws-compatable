@@ -16,6 +16,7 @@ func NewRouter(
 	taskController *controller.TaskController,
 	uploadController *controller.UploadController,
 	objectController *controller.ObjectController,
+	visionController *controller.VisionController,
 	authService *services.AuthServiceImpl,
 ) *gin.Engine {
 
@@ -42,10 +43,14 @@ func NewRouter(
 	authRequired.POST("/tasks/:taskID/upload", taskController.UploadFileToTask)
 	authRequired.POST("/tasks/:taskID/start", taskController.StartProcess)
 
+	// Image analysis
+	authRequired.POST("/analyze", visionController.AnalyzeImage)
+	authRequired.POST("/analyze/:taskID", visionController.AnalyzeTask)
+
 	// Unauthenticated routes
 	r.POST("/uploads", uploadController.UploadFile)
 	r.GET("/uploads/:taskId/:filename", uploadController.GetFile)
-	r.GET("/objects/:taskID/:filename", objectController.GetObject)
+	r.GET("/objects/:taskID/model", objectController.GetObject)
 
 	return r
 }
