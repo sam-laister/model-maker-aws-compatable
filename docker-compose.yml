@@ -1,9 +1,10 @@
-version: '3.9'
-
 services:
   golang:
     image: golang:latest
     container_name: go_dev
+    build:
+      context: ./app
+      dockerfile: Dockerfile
     ports:
       - "3333:3333"
     volumes:
@@ -13,7 +14,6 @@ services:
       - db
     networks:
       - db
-    command: tail -f /dev/null
       
   db:
     image: postgres:latest
