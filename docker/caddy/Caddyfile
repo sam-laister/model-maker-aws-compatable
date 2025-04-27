@@ -1,0 +1,20 @@
+(log_rotation) {
+    log {
+            output file /var/log/caddy/{args[0]}.log {
+                    roll_size 1gb
+                    roll_keep 5 # days
+                    roll_keep_for 720h
+            }
+    }
+}
+
+(compression) {
+    encode zstd gzip
+}
+
+# golang
+http://soupmodelmaker.local, :81  {
+    reverse_proxy golang:3333
+	import log_rotation golang
+    import compression
+}

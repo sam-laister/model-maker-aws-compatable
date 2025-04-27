@@ -1,10 +1,9 @@
 services:
   golang:
     image: golang:latest
-    container_name: go_dev
     build:
       context: ./app
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     ports:
       - "3333:3333"
     volumes:
@@ -18,14 +17,14 @@ services:
 
   db:
     image: postgres:latest
-    container_name: postgres_db
     build:
-      context: ./db
+      context: ./docker/db
       dockerfile: Dockerfile
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=appdb
+      - TZ=${TIMEZONE}
+      - POSTGRES_DB=${POSTGRES_DB}
       - DB_NAMESPACE=auth
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -37,21 +36,40 @@ services:
     restart: unless-stopped
 
   pgadmin:
-    container_name: pgadmin_container
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_SERVER_MODE: "False"
     volumes:
       - pgadmin:/var/lib/pgadmin
     ports:
-      - "${PGADMIN_PORT:-5050}:80"
+      - "${PGADMIN_PORT:-5050}:81"
     networks:
       - db
     depends_on:
       - db
     restart: unless-stopped
+
+  caddy:
+    image: caddy
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-:80}
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./docker/caddy/data:/data
+      - ./docker/caddy/config:/config
+    networks:
+      db:
+        aliases:
+          - soupmodelmaker.local
+          - api.local
 
 volumes:
   postgres_data:
@@ -59,4 +77,3 @@ volumes:
 
 networks:
   db:
-    driver: bridge
