@@ -13,7 +13,7 @@
 }
 
 # golang
-http://soupmodelmaker.local, :81  {
+http://soupmodelmaker.local, http://soupmodelmaker.org, https://soupmodelmaker.org, :81 {
     reverse_proxy golang:3333
 	import log_rotation golang
     import compression

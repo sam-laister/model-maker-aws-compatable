@@ -13,7 +13,7 @@ services:
       - db
     networks:
       - db
-    command: tail -F /dev/null
+    command: tail -f /dev/null
 
   db:
     image: postgres:latest
@@ -56,6 +56,8 @@ services:
     restart: unless-stopped
     environment:
       SERVER_NAME: ${SERVER_NAME:-:80}
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "80:80"
       - "81:81"
