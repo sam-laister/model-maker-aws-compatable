@@ -28,9 +28,8 @@ services:
       - DB_NAMESPACE=auth
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-      - PGDATA=/data/postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./pgdata:/var/lib/postgresql/data
     networks:
       - db
     restart: unless-stopped
@@ -44,7 +43,7 @@ services:
     volumes:
       - pgadmin:/var/lib/pgadmin
     ports:
-      - "${PGADMIN_PORT:-5050}:81"
+      - "${PGADMIN_PORT:-5050}:2000"
     networks:
       - db
     depends_on:

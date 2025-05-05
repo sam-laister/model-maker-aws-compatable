@@ -31,3 +31,5 @@ objects/
 app/uploads/
 
 bin/app
+*.7z
+*.gz
