@@ -4,8 +4,6 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
-    ports:
-      - "3333:3333"
     volumes:
       - ./app:/app
     working_dir: /app
@@ -20,14 +18,12 @@ services:
     build:
       context: ./docker/db
       dockerfile: Dockerfile
-    ports:
-      - "5432:5432"
     environment:
       - TZ=${TIMEZONE}
       - POSTGRES_DB=${POSTGRES_DB}
       - DB_NAMESPACE=auth
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     networks:
@@ -37,13 +33,11 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: "False"
     volumes:
       - pgadmin:/var/lib/pgadmin
-    ports:
-      - "${PGADMIN_PORT:-5050}:2000"
     networks:
       - db
     depends_on:
@@ -69,6 +63,7 @@ services:
     networks:
       db:
         aliases:
+          - db.soupmodelmaker.local
           - soupmodelmaker.local
           - api.local
 

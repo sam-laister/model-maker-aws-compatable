@@ -12,6 +12,11 @@
     encode zstd gzip
 }
 
+# pgadmin
+db.soupmodelmaker.local {
+  reverse_proxy pgadmin:80
+}
+
 # golang
 http://soupmodelmaker.local, http://soupmodelmaker.org, https://soupmodelmaker.org, :81 {
     reverse_proxy golang:3333
