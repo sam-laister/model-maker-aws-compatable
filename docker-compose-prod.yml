@@ -2,7 +2,7 @@ services:
   golang:
     build:
       context: ./app
-      dockerfile: Dockerfile
+      dockerfile: ./app/Dockerfile
     container_name: golang
     networks:
       - db
