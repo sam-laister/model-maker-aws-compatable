@@ -50,13 +50,6 @@ RUN apt-get update && apt-get install -y wget xz-utils libcgal-qt5-dev \
     rm -rf go1.23.8.linux-amd64.tar.gz && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-
-COPY . .
-
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
 # RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server
 # RUN chmod +x ./server
 
@@ -69,8 +62,15 @@ RUN go install github.com/pressly/goose/v3/cmd/goose@latest && \
     go install github.com/joho/godotenv/cmd/godotenv@latest && \
     go install github.com/nikolaydubina/go-cover-treemap@latest
 
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /app
+
+COPY . .
+
+RUN echo "$GOOGLE_CREDENTIALS" > service-account-key.json
+
 EXPOSE 3333
 
-ENTRYPOINT ["/entrypoint.sh"]
-
-CMD ["tail", "-f", "/dev/null"]
+CMD ["make"]
