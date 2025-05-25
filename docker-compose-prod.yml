@@ -1,7 +1,9 @@
 services:
   golang:
-    image: saml02/model-maker-api
-    container_name: go_dev
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: golang
     depends_on:
       - db
     networks:
@@ -18,7 +20,6 @@ services:
     volumes:
       - ./objects:/app/objects
       - ./uploads:/app/uploads
-    command: make
     restart: always
 
 volumes:
