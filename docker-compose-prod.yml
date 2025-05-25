@@ -4,8 +4,6 @@ services:
       context: ./app
       dockerfile: Dockerfile
     container_name: golang
-    depends_on:
-      - db
     networks:
       - db
     environment:
