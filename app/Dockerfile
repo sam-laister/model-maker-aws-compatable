@@ -53,6 +53,9 @@ RUN apt-get update && apt-get install -y wget xz-utils libcgal-qt5-dev \
 WORKDIR /app
 COPY . .
 
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server
 # RUN chmod +x ./server
 
@@ -65,7 +68,8 @@ RUN go install github.com/pressly/goose/v3/cmd/goose@latest && \
     go install github.com/joho/godotenv/cmd/godotenv@latest && \
     go install github.com/nikolaydubina/go-cover-treemap@latest
 
-
 EXPOSE 3333
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["eco", "Server is running..."]
