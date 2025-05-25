@@ -27,8 +27,6 @@ go.work.sum
 
 service-account-key.json
 
-app/uploads/
-
 bin/app
 *.7z
 *.gz

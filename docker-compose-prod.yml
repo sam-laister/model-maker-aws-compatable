@@ -16,7 +16,8 @@ services:
       - PORT=${PORT}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
-      - ./app:/app
+      - ./app/uploads:/app/uploads
+      - ./app/objects:/app/objects
     restart: always
 
 volumes:

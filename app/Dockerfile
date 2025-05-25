@@ -52,6 +52,8 @@ RUN apt-get update && apt-get install -y wget xz-utils libcgal-qt5-dev \
 
 WORKDIR /app
 
+COPY . .
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
