@@ -1,0 +1,15 @@
+{
+    "config": {
+        "gemini_prompts": [{
+                "id": "analyze_task_image",
+                "prompt": "Caption this image, give one sentence only",
+                "response_type": "text"
+            },
+            {
+                "id": "detect_objects",
+                "prompt": "Here is an image, return pixel coordinates for points that highlight the objects in the image. Give answers in json format using (x,y) notation",
+                "response_type": "json"
+            }
+        ]
+    }
+}
