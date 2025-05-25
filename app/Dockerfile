@@ -72,4 +72,4 @@ EXPOSE 3333
 
 ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["eco", "Server is running..."]
+CMD ["tail", "-f", "/dev/null"]
