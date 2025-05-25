@@ -66,6 +66,8 @@ services:
           - db.soupmodelmaker.local
           - soupmodelmaker.local
           - api.local
+          - soupmodelmaker.org
+          - api.soupmodelmaker.org
 
 volumes:
   postgres_data:

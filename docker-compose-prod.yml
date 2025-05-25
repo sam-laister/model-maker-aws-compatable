@@ -1,0 +1,29 @@
+services:
+  golang:
+    image: saml02/model-maker-api
+    container_name: go_dev
+    depends_on:
+      - db
+    networks:
+      - db
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_TIMEZONE=${DB_TIMEZONE}
+      - PORT=${PORT}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./objects:/app/objects
+      - ./uploads:/app/uploads
+    command: make
+    restart: always
+
+volumes:
+  postgres_data:
+  pgadmin:
+
+networks:
+  db:

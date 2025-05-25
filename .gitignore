@@ -27,7 +27,6 @@ go.work.sum
 
 service-account-key.json
 
-objects/
 app/uploads/
 
 bin/app
