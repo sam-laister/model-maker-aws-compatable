@@ -14,7 +14,7 @@ import (
 
 type VisionServiceImpl struct{}
 
-func NewVisionService() *VisionServiceImpl {
+func NewVisionService() VisionService {
 	return &VisionServiceImpl{}
 }
 
@@ -74,5 +74,30 @@ func extractText(resp *genai.GenerateContentResponse) string {
 		}
 	}
 	return builder.String()
+}
 
+func (s *VisionServiceImpl) GenerateMessage(message string) (string, error) {
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	model := client.GenerativeModel("gemini-2.0-flash")
+
+	// Create the request.
+	req := []genai.Part{
+		genai.Text(message),
+	}
+
+	// Generate content.
+	resp, err := model.GenerateContent(ctx, req...)
+	if err != nil {
+		panic(err)
+	}
+
+	var result string = extractText(resp)
+
+	return result, nil
 }

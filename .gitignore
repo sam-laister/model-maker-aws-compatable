@@ -27,7 +27,16 @@ go.work.sum
 
 service-account-key.json
 
-objects/
-app/uploads/
-
 bin/app
+*.7z
+*.gz
+
+.env
+
+pgdata/*
+app/seeds/backup/images/
+
+*/*.DS_Store
+.DS_Store
+
+docker/caddy/data

@@ -8,4 +8,5 @@ import (
 type AuthService interface {
 	ValidateToken(token string) (*auth.Token, error)
 	Verify(token string) (*model.User, error)
+	Unverify(user *model.User) error
 }

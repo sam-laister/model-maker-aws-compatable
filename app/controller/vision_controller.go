@@ -46,7 +46,7 @@ func (c *VisionController) AnalyzeTask(ctx *gin.Context) {
 		return
 	}
 
-	result, err := c.VisionService.AnalyseImage(fmt.Sprintf("./uploads/%d/%s", task.Id, task.Images[0].Filename), "")
+	result, err := c.VisionService.AnalyseImage(fmt.Sprintf("./uploads/%d/%s", task.ID, task.Images[0].Filename), "")
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to analyze the image"})

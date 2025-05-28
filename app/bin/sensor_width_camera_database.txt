@@ -2397,6 +2397,39 @@ iPhone 15 Pro;9.92
 Apple iPhone 15 Pro (Main);9.92
 Apple iPhone 15 Pro (Ultra Wide);7.56
 Apple iPhone 15 Pro (Telephoto);9.92
+iPhone6s;1;4.8
+iPhone6s;2;4.8
+iPhone7;1;4.8
+iPhone7;2;4.8
+iPhone8;1;4.8
+iPhone8;2;4.8
+iPhone9;1;4.8
+iPhone9;3;4.8
+iPhone10;1;4.25
+iPhone10;2;4.25
+iPhone10;3;4.25
+iPhone10;4;4.25
+iPhone11;2;4.25
+iPhone11;4;4.25
+iPhone11;6;4.25
+iPhone12;1;4.25
+iPhone12;3;4.25
+iPhone12;5;4.25
+iPhone13;1;4.25
+Apple iPhone 13 Pro (Main);4.25
+Apple iPhone 13 Pro (Ultra Wide);4.25
+Apple iPhone 13 Pro (Telephoto);5.6
+iPhone13;2;4.25
+iPhone13;3;5.6
+iPhone13;4;5.6
+iPhone14;2;5.6
+iPhone14;3;5.6
+iPhone14;4;5.6
+iPhone14;5;5.6
+Apple iPhone 14 Pro (Main);5.6
+Apple iPhone 14 Pro (Ultra Wide);5.6
+Apple iPhone 14 Pro (Telephoto);5.6
+iPhone15;4;9.92
 IQ140;43.9
 IQ160;53.9
 IQ250;44

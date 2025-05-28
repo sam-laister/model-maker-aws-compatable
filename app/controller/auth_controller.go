@@ -65,3 +65,17 @@ func (c *AuthController) Verify(ctx *gin.Context) {
 		return
 	}
 }
+
+func (c *AuthController) Unverify(ctx *gin.Context) {
+
+	user := ctx.MustGet("user").(*models.User)
+
+	err := c.authService.Unverify(user)
+	if err != nil {
+		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return the custom token to the client
+	ctx.JSON(200, gin.H{"info": "User unverified successfully"})
+}

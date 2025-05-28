@@ -2,10 +2,12 @@ package model
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
-	Id          uint      `gorm:"primaryKey"`
+	gorm.Model
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 	DeletedAt   *time.Time

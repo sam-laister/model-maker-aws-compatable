@@ -9,7 +9,7 @@ type AppFileServiceImpl struct {
 	appFileRepo repositories.AppFileRepository
 }
 
-func NewAppFileServiceFile(appFileRepo repositories.AppFileRepository) *AppFileServiceImpl {
+func NewAppFileServiceFile(appFileRepo repositories.AppFileRepository) AppFileService {
 	return &AppFileServiceImpl{appFileRepo: appFileRepo}
 }
 

@@ -16,7 +16,7 @@ type AuthServiceImpl struct {
 	userRepo repositories.UserRepository
 }
 
-func NewAuthService(FireAuth *auth.Client, DB *gorm.DB, userRepo repositories.UserRepository) *AuthServiceImpl {
+func NewAuthService(FireAuth *auth.Client, DB *gorm.DB, userRepo repositories.UserRepository) AuthService {
 	return &AuthServiceImpl{FireAuth: FireAuth, DB: DB, userRepo: userRepo}
 }
 
@@ -54,4 +54,13 @@ func (s *AuthServiceImpl) Verify(token string) (*model.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *AuthServiceImpl) Unverify(user *model.User) error {
+	err := s.userRepo.DeleteUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

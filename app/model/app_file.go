@@ -1,8 +1,13 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type AppFile struct {
+	gorm.Model
 	Id        uint      `gorm:"primaryKey"`
 	Filename  string    `gorm:"not null"`
 	Url       string    `gorm:"not null"`

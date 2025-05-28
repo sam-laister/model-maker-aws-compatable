@@ -29,21 +29,37 @@ func NewTaskController(taskService services.TaskService, appFileService services
 	return &TaskController{TaskService: taskService, AppFileService: appFileService, VisionService: visionService}
 }
 
-func (c *TaskController) GetTasks(ctx *gin.Context) {
+func (c *TaskController) GetUnarchivedTasks(ctx *gin.Context) {
 
 	user := ctx.MustGet("user")
-	userId := user.(*model.User).Id
+	userId := user.(*model.User).Model.ID
 
-	tasks, err := c.TaskService.GetTasks(userId)
+	tasks, err := c.TaskService.GetUnarchivedTasks(userId)
 	if err != nil {
 		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	// I dont like this being in a controller, but time constraints
-	if err := database.DB.Preload("Mesh", "file_type = ?", "mesh").Find(&tasks).Error; err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch tasks"})
+	for i := range tasks {
+		c.TaskService.FullyLoadTask(tasks[i])
+	}
+
+	ctx.JSON(200, gin.H{"tasks": tasks})
+}
+
+func (c *TaskController) GetArchivedTasks(ctx *gin.Context) {
+
+	user := ctx.MustGet("user")
+	userId := user.(*model.User).Model.ID
+
+	tasks, err := c.TaskService.GetArchivedTasks(userId)
+	if err != nil {
+		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
+	}
+
+	for i := range tasks {
+		c.TaskService.FullyLoadTask(tasks[i])
 	}
 
 	ctx.JSON(200, gin.H{"tasks": tasks})
@@ -89,12 +105,12 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 	task := &model.Task{
 		Title:       "",
 		Description: "", // Overriden by ai-description
-		UserId:      user.Id,
+		UserId:      user.Model.ID,
 		Completed:   false,
 		Status:      "INITIAL",
 	}
 
-	createdTask, err := c.TaskService.CreateTask(task)
+	err := c.TaskService.CreateTask(task)
 
 	if err != nil {
 		log.Printf("Error creating task: %v", err)
@@ -102,7 +118,7 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"task": createdTask})
+	ctx.JSON(http.StatusCreated, gin.H{"task": task})
 }
 
 // UploadFileToTask handles file uploads for a task
@@ -293,4 +309,121 @@ func (c *TaskController) StartProcess(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, gin.H{"message": "Process started."})
 
 	go c.TaskService.RunPhotogrammetryProcess(task)
+}
+
+func (c *TaskController) UpdateTask(ctx *gin.Context) {
+	task := &model.Task{}
+
+	if err := ctx.ShouldBindJSON(task); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	user := ctx.MustGet("user").(*model.User)
+	task.UserId = user.Model.ID
+
+	err := c.TaskService.UpdateTask(task)
+	if err != nil {
+		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"task": task})
+}
+
+func (c *TaskController) SendMessage(ctx *gin.Context) {
+
+	taskId := ctx.Param("taskID")
+	taskIdInt, err := strconv.Atoi(taskId)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID"})
+		return
+	}
+
+	type MessageBody struct {
+		Message string
+	}
+
+	chatMessage := &MessageBody{}
+
+	if err := ctx.ShouldBindJSON(chatMessage); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	message, err := c.TaskService.SendMessage(uint(taskIdInt), chatMessage.Message, "USER")
+
+	if err != nil {
+		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Call visionService to generate a message
+	go func(taskId uint) {
+		task, err := c.TaskService.GetTask(taskId)
+
+		if err != nil {
+			log.Printf("Failed to get task: %v\n", err)
+			return
+		}
+
+		imagePath := fmt.Sprintf("./uploads/%d/%s", taskId, task.Images[0].Filename)
+
+		if _, err := os.Stat(imagePath); os.IsNotExist(err) {
+			log.Printf("Image file does not exist: %v\n", err)
+
+			aiMessage, err := c.VisionService.GenerateMessage(fmt.Sprintf("You are a help bot for photogrammetry software. The user has asked you: %s. Please answer in a friendly and helpful manner. Keep the answer short and to the point. Do not use any technical terms. If you don't know the answer, say 'I don't know'.", message.Message))
+
+			if err != nil {
+				log.Printf("Failed to handle vision message: %v\n", err)
+			}
+			c.TaskService.SendMessage(uint(taskIdInt), aiMessage, "AI")
+			return
+		} else {
+			aiMessage, err := c.VisionService.AnalyseImage(imagePath, fmt.Sprintf("You are a help bot for photogrammetry software. The user has asked you: %s. Please answer in a friendly and helpful manner. Keep the answer short and to the point. Do not use any technical terms. If you don't know the answer, say 'I don't know'. Also sent is a screenshot of the object the user is scanning.", message.Message))
+
+			if err != nil {
+				log.Printf("Failed to handle vision message: %v\n", err)
+			}
+			c.TaskService.SendMessage(uint(taskIdInt), aiMessage, "AI")
+		}
+	}(uint(taskIdInt))
+
+	ctx.JSON(http.StatusOK, gin.H{"message": message})
+
+}
+
+func (c *TaskController) ArchiveTask(ctx *gin.Context) {
+	taskId := ctx.Param("taskID")
+	taskIdInt, err := strconv.Atoi(taskId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID"})
+		return
+	}
+
+	task, err := c.TaskService.ArchiveTask(uint(taskIdInt))
+	if err != nil {
+		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": task})
+}
+
+func (c *TaskController) UnarchiveTask(ctx *gin.Context) {
+	taskId := ctx.Param("taskID")
+	taskIdInt, err := strconv.Atoi(taskId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID"})
+		return
+	}
+
+	task, err := c.TaskService.UnarchiveTask(uint(taskIdInt))
+	if err != nil {
+		ctx.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": task})
 }
