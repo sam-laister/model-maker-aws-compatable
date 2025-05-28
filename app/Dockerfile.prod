@@ -4,7 +4,7 @@
 # ------------------------------
 # Stage 1: Build OpenMVG/OpenMVS
 # ------------------------------
-FROM --platform=linux/amd64 ubuntu:22.04 AS cv_builder
+FROM ubuntu:22.04 AS cv_builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -46,7 +46,7 @@ RUN git clone --branch develop --depth=1 https://github.com/cdcseacave/openMVS.g
 # ------------------------------
 # Stage 2: Build Go Application
 # ------------------------------
-FROM --platform=linux/amd64 golang:1.24.3-alpine AS go_builder
+FROM golang:1.24.3-alpine AS go_builder
 
 # Install git for Go modules (if needed)
 RUN apk add --no-cache git ca-certificates
@@ -69,7 +69,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 # ------------------------------
 # Stage 3: Build Blender (minimal)
 # ------------------------------
-FROM --platform=linux/amd64 ubuntu:22.04 AS blender_builder
+FROM ubuntu:22.04 AS blender_builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget xz-utils && \
@@ -83,7 +83,7 @@ RUN wget -q https://download.blender.org/release/Blender4.4/blender-4.4.0-linux-
 # ------------------------------
 # Stage 4: Production Runtime
 # ------------------------------
-FROM --platform=linux/amd64 ubuntu:22.04 AS final
+FROM ubuntu:22.04 AS final
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/false appuser
