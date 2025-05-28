@@ -17,9 +17,9 @@ db.soupmodelmaker.local {
   reverse_proxy pgadmin:80
 }
 
-# golang
-http://soupmodelmaker.local, http://soupmodelmaker.org, https://soupmodelmaker.org, :81 {
-    reverse_proxy golang:3333
-	import log_rotation golang
+# modelmaker
+http://soupmodelmaker.local, :81 {
+    reverse_proxy modelmaker:3333
+	import log_rotation modelmaker
     import compression
 }
