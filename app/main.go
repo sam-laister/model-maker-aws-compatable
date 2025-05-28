@@ -24,7 +24,7 @@ func main() {
 	db.ConnectDatabase()
 
 	// Create a Firebase app instance
-	opt := option.WithCredentialsFile("./service-account-key.json")
+	opt := option.WithCredentialsFile(os.Getenv("GOOGLE_CREDENTIALS_FILE"))
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		log.Fatalf("Failed to create Firebase app: %v", err)

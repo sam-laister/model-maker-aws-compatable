@@ -6,6 +6,7 @@ toolchain go1.24.2
 
 require (
 	firebase.google.com/go/v4 v4.15.2
+	github.com/appleboy/go-fcm v1.2.5
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/generative-ai-go v0.19.0
 	github.com/joho/godotenv v1.5.1
@@ -36,7 +37,6 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/MicahParks/keyfunc v1.9.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
-	github.com/appleboy/go-fcm v1.2.5 // indirect
 	github.com/bodgit/plumbing v1.3.0 // indirect
 	github.com/bodgit/sevenzip v1.6.1 // indirect
 	github.com/bodgit/windows v1.0.1 // indirect

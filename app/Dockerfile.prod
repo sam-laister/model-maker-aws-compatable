@@ -1,92 +1,143 @@
+# Production Dockerfile for OpenMVG/OpenMVS Go Application
+# Multi-stage build optimized for security, size, and performance
+
 # ------------------------------
 # Stage 1: Build OpenMVG/OpenMVS
 # ------------------------------
-FROM --platform=linux/amd64 ubuntu:latest AS builder
+FROM --platform=linux/amd64 ubuntu:22.04 AS cv_builder
 
-ENV DEBIAN_FRONTEND=noninteractive TZ=Europe/Minsk
+ENV DEBIAN_FRONTEND=noninteractive
 
+# Install only build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tzdata cmake build-essential git wget curl \
+    cmake build-essential git ca-certificates \
     python3-dev libboost-all-dev libopencv-dev \
     libjpeg-dev libpng-dev libtiff-dev libglu1-mesa-dev \
     libglew-dev libglfw3-dev coinor-libclp-dev libceres-dev \
     libcgal-dev libcgal-qt5-dev graphviz liblemon-dev \
-    ca-certificates pkg-config libxi6 \
-    g++-x86-64-linux-gnu libc6-dev-amd64-cross \
-    vim nano && \
-    rm -rf /var/lib/apt/lists/* && update-ca-certificates
+    pkg-config && \
+    rm -rf /var/lib/apt/lists/*
 
+# Build VCG library
 RUN git clone --depth=1 https://github.com/cdcseacave/VCG.git /vcglib
 
-RUN git clone --recursive https://github.com/openMVG/openMVG.git /openMVG && \
+# Build OpenMVG
+RUN git clone --recursive --depth=1 https://github.com/openMVG/openMVG.git /openMVG && \
     mkdir -p /openMVG_build && cd /openMVG_build && \
-    cmake -DCMAKE_BUILD_TYPE=RELEASE /openMVG/src && \
-    make -j$(nproc)
+    cmake -DCMAKE_BUILD_TYPE=RELEASE \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          /openMVG/src && \
+    make -j$(nproc) && \
+    make install
 
-RUN git clone --branch develop https://github.com/cdcseacave/openMVS.git /openMVS && \
+# Build OpenMVS
+RUN git clone --branch develop --depth=1 https://github.com/cdcseacave/openMVS.git /openMVS && \
     sed -i 's|<CGAL/AABB_traits_3.h>|<CGAL/AABB_tree.h>|g' /openMVS/libs/MVS/SceneReconstruct.cpp && \
     sed -i 's|<CGAL/AABB_triangle_primitive_3.h>|<CGAL/AABB_triangle_primitive.h>|g' /openMVS/libs/MVS/SceneReconstruct.cpp && \
     mkdir -p /openMVS_build && cd /openMVS_build && \
     cmake -DCMAKE_BUILD_TYPE=RELEASE \
-            -DOpenMVG_DIR=/openMVG_build/src/openMVG/cmake/ \
-            -DVCG_ROOT=/vcglib \
-            /openMVS && \
-    make -j$(nproc)
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DOpenMVG_DIR=/usr/local/lib/cmake/openmvg \
+          -DVCG_ROOT=/vcglib \
+          /openMVS && \
+    make -j$(nproc) && \
+    make install
 
-# -------------------------
-# Stage 2: Build Go backend
-# -------------------------
-FROM golang:tip-bookworm AS golang_builder
+# ------------------------------
+# Stage 2: Build Go Application
+# ------------------------------
+FROM --platform=linux/amd64 golang:1.24.3-alpine AS go_builder
+
+# Install git for Go modules (if needed)
+RUN apk add --no-cache git ca-certificates
 
 WORKDIR /app
+
+# Copy go mod files first for better caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server
-RUN chmod +x ./server
+# Build the Go application
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags='-w -s -extldflags "-static"' \
+    -a -installsuffix cgo \
+    -o server .
 
-RUN go install github.com/pressly/goose/v3/cmd/goose@latest && \
-    go install github.com/joho/godotenv/cmd/godotenv@latest && \
-    go install github.com/nikolaydubina/go-cover-treemap@latest
+# ------------------------------
+# Stage 3: Build Blender (minimal)
+# ------------------------------
+FROM --platform=linux/amd64 ubuntu:22.04 AS blender_builder
 
-# ------------------------
-# Stage 3: Final Runtime
-# ------------------------
-FROM --platform=linux/amd64 ubuntu:latest AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget xz-utils && \
+    rm -rf /var/lib/apt/lists/*
 
-ENV DEBIAN_FRONTEND=noninteractive TZ=Europe/Minsk
-WORKDIR /app
-
-COPY ./bin ./bin
-
-RUN apt-get update && apt-get install -y wget xz-utils libcgal-qt5-dev \
-    libceres-dev libboost-all-dev libopencv-dev build-essential && \
-    wget https://download.blender.org/release/Blender4.4/blender-4.4.0-linux-x64.tar.xz && \
+RUN wget -q https://download.blender.org/release/Blender4.4/blender-4.4.0-linux-x64.tar.xz --no-check-certificate && \
     mkdir -p /opt/blender && \
     tar -xf blender-4.4.0-linux-x64.tar.xz -C /opt/blender --strip-components=1 && \
-    ln -s /opt/blender/blender /usr/local/bin/blender && \
-    rm blender-4.4.0-linux-x64.tar.xz && \
+    rm blender-4.4.0-linux-x64.tar.xz
+
+# ------------------------------
+# Stage 4: Production Runtime
+# ------------------------------
+FROM --platform=linux/amd64 ubuntu:22.04 AS final
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser -s /bin/false appuser
+
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcgal-qt5-dev libceres2 libboost-system1.74.0 libboost-filesystem1.74.0 \
+    libboost-program-options1.74.0 libboost-serialization1.74.0 \
+    libopencv-core4.5d libopencv-imgproc4.5d libopencv-imgcodecs4.5d \
+    libjpeg8 libpng16-16 libtiff5 libglu1-mesa libglew2.2 \
+    libglfw3 libgomp1 ca-certificates && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy server binary
-COPY --from=golang_builder /app/seed .
-COPY --from=golang_builder /app/seeder .
-COPY --from=golang_builder /app/seeds .
-COPY --from=golang_builder /app/bin ./bin
-COPY --from=golang_builder /go/bin /usr/local/bin
-COPY --from=golang_builder /app/db/migrations ./migrations
-COPY --from=golang_builder /app/Makefile .
-COPY --from=golang_builder /app/server .
-COPY --from=golang_builder /app/.env .
-COPY --from=golang_builder /app/.env.test .
+# Copy OpenMVG/OpenMVS binaries and libraries
+COPY --from=cv_builder /usr/local/bin/ /usr/local/bin/
+COPY --from=cv_builder /usr/local/lib/ /usr/local/lib/
 
-# Copy OpenMVG and OpenMVS executables
-COPY --from=builder /openMVG_build/Linux-x86_64-RELEASE /usr/local/bin
-COPY --from=builder /openMVS_build/bin /usr/local/bin
+# Copy Blender (only essential parts)
+COPY --from=blender_builder /opt/blender/blender /usr/local/bin/blender
+COPY --from=blender_builder /opt/blender/4.4/ /opt/blender/4.4/
 
-# Update PATH so binaries can be found
-ENV PATH="/usr/local/bin/openMVG:/usr/local/bin/openMVS:$PATH"
+# Copy Go application
+COPY --from=go_builder /app/server /usr/local/bin/server
 
+# Update library cache
+RUN ldconfig
+
+# Create app directory with proper permissions
+RUN mkdir -p /app /app/data /app/logs && \
+    chown -R appuser:appuser /app
+
+# Copy entrypoint script
+COPY --chown=appuser:appuser entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Set environment variables
+ENV PATH="/usr/local/bin:$PATH" \
+    PORT=3333 \
+    GIN_MODE=release \
+    LOG_LEVEL=info \
+    BLENDER_PATH=/usr/local/bin/blender
+
+# Switch to non-root user
+USER appuser
+
+WORKDIR /app
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# Expose port
 EXPOSE 3333
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s CMD curl -f http://localhost:3333/health || exit 1
-
+# Use proper entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["server"]

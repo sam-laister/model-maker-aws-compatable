@@ -1,0 +1,45 @@
+services:
+  modelmaker:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+    container_name: model-maker-api
+    networks:
+      - db
+    volumes:
+      - ./app/uploads:/app/uploads
+      - ./app/objects:/app/objects
+    env_file:
+      - ./app/.env
+    environment:
+      - PORT=3333
+      - LOG_LEVEL=info
+    ports:
+      - "3333:3333"
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres:latest
+    build:
+      context: ./docker/db
+      dockerfile: Dockerfile
+    environment:
+      - TZ=${TIMEZONE}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DB_NAMESPACE=auth
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - db
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  pgadmin:
+
+networks:
+  db:
