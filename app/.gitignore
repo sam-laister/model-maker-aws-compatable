@@ -37,3 +37,5 @@ cover.html
 *.gz
 
 seeds/backup/images
+
+out.svg
