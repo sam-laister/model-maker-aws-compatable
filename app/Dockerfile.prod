@@ -25,8 +25,8 @@ RUN git clone --depth=1 https://github.com/cdcseacave/VCG.git /vcglib
 RUN git clone --recursive --depth=1 https://github.com/openMVG/openMVG.git /openMVG && \
     mkdir -p /openMVG_build && cd /openMVG_build && \
     cmake -DCMAKE_BUILD_TYPE=RELEASE \
-          -DCMAKE_INSTALL_PREFIX=/usr/local \
-          /openMVG/src && \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    /openMVG/src && \
     make -j$(nproc) && \
     make install
 
@@ -36,10 +36,10 @@ RUN git clone --branch develop --depth=1 https://github.com/cdcseacave/openMVS.g
     sed -i 's|<CGAL/AABB_triangle_primitive_3.h>|<CGAL/AABB_triangle_primitive.h>|g' /openMVS/libs/MVS/SceneReconstruct.cpp && \
     mkdir -p /openMVS_build && cd /openMVS_build && \
     cmake -DCMAKE_BUILD_TYPE=RELEASE \
-          -DCMAKE_INSTALL_PREFIX=/usr/local \
-          -DOpenMVG_DIR=/usr/local/lib/cmake/openmvg \
-          -DVCG_ROOT=/vcglib \
-          /openMVS && \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DOpenMVG_DIR=/usr/local/lib/cmake/openmvg \
+    -DVCG_ROOT=/vcglib \
+    /openMVS && \
     make -j$(nproc) && \
     make install
 
@@ -94,7 +94,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libboost-program-options1.74.0 libboost-serialization1.74.0 \
     libopencv-core4.5d libopencv-imgproc4.5d libopencv-imgcodecs4.5d \
     libjpeg8 libpng16-16 libtiff5 libglu1-mesa libglew2.2 \
-    libglfw3 libgomp1 ca-certificates && \
+    libglfw3 libgomp1 ca-certificates curl wget && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy OpenMVG/OpenMVS binaries and libraries
