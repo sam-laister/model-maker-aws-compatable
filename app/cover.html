@@ -1,0 +1,1414 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>database: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/Soup666/diss-api/database/database.go (72.2%)</option>
+				
+				<option value="file1">github.com/Soup666/diss-api/docs/docs.go (0.0%)</option>
+				
+				<option value="file2">github.com/Soup666/diss-api/middleware/authenticate_middleware.go (100.0%)</option>
+				
+				<option value="file3">github.com/Soup666/diss-api/middleware/cors_middleware.go (0.0%)</option>
+				
+				<option value="file4">github.com/Soup666/diss-api/model/report_type.go (100.0%)</option>
+				
+				<option value="file5">github.com/Soup666/diss-api/model/task.go (80.0%)</option>
+				
+				<option value="file6">github.com/Soup666/diss-api/model/task_status.go (100.0%)</option>
+				
+				<option value="file7">github.com/Soup666/diss-api/repository/app_file_repository_impl.go (0.0%)</option>
+				
+				<option value="file8">github.com/Soup666/diss-api/repository/chat_repository_impl.go (0.0%)</option>
+				
+				<option value="file9">github.com/Soup666/diss-api/repository/collections_repository_impl.go (40.9%)</option>
+				
+				<option value="file10">github.com/Soup666/diss-api/repository/reports_repository_impl.go (50.0%)</option>
+				
+				<option value="file11">github.com/Soup666/diss-api/repository/task_repository_impl.go (22.0%)</option>
+				
+				<option value="file12">github.com/Soup666/diss-api/repository/user_analytics_repository_impl.go (0.0%)</option>
+				
+				<option value="file13">github.com/Soup666/diss-api/repository/user_repository_impl.go (84.6%)</option>
+				
+				<option value="file14">github.com/Soup666/diss-api/router/router.go (0.0%)</option>
+				
+				<option value="file15">github.com/Soup666/diss-api/utils/file_util.go (6.1%)</option>
+				
+				<option value="file16">github.com/Soup666/diss-api/utils/testing_utils.go (50.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package database
+
+import (
+        "fmt"
+        "log"
+        "os"
+        "testing"
+
+        "github.com/Soup666/diss-api/model"
+        "gorm.io/driver/postgres"
+        "gorm.io/gorm"
+)
+
+var DB *gorm.DB
+
+func ConnectDatabase() error <span class="cov8" title="1">{
+        dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=%s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_TIMEZONE"))
+
+        var err error
+        DB, err = gorm.Open(postgres.Open(dsn), &amp;gorm.Config{})
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Error connecting to the database: ", err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">err = MigrateScheme()
+
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to migrate test DB: ", err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">log.Println("Connected to database", dsn)
+
+        return nil</span>
+}
+
+func SetupTestDB(t *testing.T) error <span class="cov8" title="1">{
+
+        log.Println("Connecting to database...")
+
+        err := ConnectDatabase()
+
+        ResetTestDB()
+
+        if err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to connect to test DB: %v", err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">err = MigrateScheme()
+
+        if err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to migrate test DB: %v", err)
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func ResetTestDB() <span class="cov8" title="1">{
+        log.Println("Resetting test database...")
+
+        tables := []string{"users", "tasks", "reports", "collections"}
+        for _, table := range tables </span><span class="cov8" title="1">{
+                truncateTableCommand := fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", table)
+                DB.Exec(truncateTableCommand)
+        }</span>
+}
+
+func MigrateScheme() error <span class="cov8" title="1">{
+        createEnumCommand := `
+        --create types
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'taskstatus') THEN
+        CREATE TYPE TaskStatus AS ENUM
+        (
+            'SUCCESS', 'INPROGRESS', 'FAILED', 'INITIAL'
+        );
+    END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reporttype') THEN
+        CREATE TYPE ReportType AS ENUM
+        (
+            'BUG', 'FEEDBACK'
+        );
+    END IF;
+END$$;
+`
+
+        DB.Exec(createEnumCommand)
+
+        err := DB.AutoMigrate(&amp;model.User{}, &amp;model.Task{}, &amp;model.Report{}, &amp;model.Collection{}, &amp;model.ChatMessage{}, &amp;model.AppFile{}, &amp;model.TaskLog{})
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("Failed to migrate test DB: %v", err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">log.Println("Database migrated successfully")
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
+package docs
+
+import "github.com/swaggo/swag"
+
+const docTemplate = `{
+    "schemes": {{ marshal .Schemes }},
+    "swagger": "2.0",
+    "info": {
+        "description": "{{escape .Description}}",
+        "title": "{{.Title}}",
+        "contact": {},
+        "version": "{{.Version}}"
+    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
+    "paths": {
+        "/tasks": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new task for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Create a new task",
+                "parameters": [
+                    {
+                        "description": "Task data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.CreateTaskRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.Task"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/tasks/{taskID}/start": {
+            "post": {
+                "description": "Uploads files to a task",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Upload files to a task",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Task data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.CreateTaskRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Task ID",
+                        "name": "taskID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/tasks/{taskID}/upload": {
+            "post": {
+                "description": "Uploads files to a task",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Upload files to a task",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Task ID",
+                        "name": "taskID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Files to upload",
+                        "name": "files",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "controller.CreateTaskRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "title"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.AppFile": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "fileType": {
+                    "type": "string"
+                },
+                "filename": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "taskID": {
+                    "description": "Foreign key",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Task": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.AppFile"
+                    }
+                },
+                "mesh": {
+                    "$ref": "#/definitions/model.AppFile"
+                },
+                "status": {
+                    "$ref": "#/definitions/model.TaskStatus"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.TaskStatus": {
+            "type": "string",
+            "enum": [
+                "SUCCESS",
+                "INPROGRESS",
+                "FAILED",
+                "INITIAL"
+            ],
+            "x-enum-varnames": [
+                "SUCCESS",
+                "INPROGRESS",
+                "FAILED",
+                "INITIAL"
+            ]
+        }
+    }
+}`
+
+// SwaggerInfo holds exported Swagger Info so clients can modify it
+var SwaggerInfo = &amp;swag.Spec{
+        Version:          "",
+        Host:             "",
+        BasePath:         "",
+        Schemes:          []string{},
+        Title:            "",
+        Description:      "",
+        InfoInstanceName: "swagger",
+        SwaggerTemplate:  docTemplate,
+        LeftDelim:        "{{",
+        RightDelim:       "}}",
+}
+
+func init() <span class="cov0" title="0">{
+        swag.Register(SwaggerInfo.InstanceName(), SwaggerInfo)
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package middleware
+
+import (
+        "net/http"
+        "strings"
+
+        "github.com/Soup666/diss-api/services"
+        "github.com/gin-gonic/gin"
+)
+
+// AuthMiddleware checks the header for a valid API token
+func AuthMiddleware(authService services.AuthService) gin.HandlerFunc <span class="cov8" title="1">{
+        return func(c *gin.Context) </span><span class="cov8" title="1">{
+                // Get the `Authorization` header
+                authHeader := c.GetHeader("Authorization")
+
+                // Validate the header format (e.g., "Bearer &lt;token&gt;")
+                if !strings.HasPrefix(authHeader, "Bearer ") </span><span class="cov8" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header"})
+                        c.Abort()
+                        return
+                }</span>
+
+                // Extract the token
+                <span class="cov8" title="1">token := strings.TrimPrefix(authHeader, "Bearer ")
+
+                authToken, err := authService.ValidateToken(token)
+
+                if err != nil </span><span class="cov8" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "Token validation failed"})
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov8" title="1">user, err := authService.Verify(authToken.UID)
+
+                if err != nil </span><span class="cov8" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unable to verify user"})
+                        c.Abort()
+                        return
+                }</span>
+
+                // Token is valid, proceed with the request
+                <span class="cov8" title="1">c.Set("token", authToken.UID)
+                c.Set("user", user)
+                c.Next()</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package middleware
+
+import "github.com/gin-gonic/gin"
+
+func CORSMiddleware() gin.HandlerFunc <span class="cov0" title="0">{
+        return func(c *gin.Context) </span><span class="cov0" title="0">{
+                c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+                c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+                c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+                c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+
+                if c.Request.Method == "OPTIONS" </span><span class="cov0" title="0">{
+                        c.AbortWithStatus(204)
+                        return
+                }</span>
+
+                <span class="cov0" title="0">c.Next()</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package model
+
+import "database/sql/driver"
+
+type ReportType string
+
+const (
+        BUG      ReportType = "BUG"
+        FEEDBACK ReportType = "FEEDBACK"
+)
+
+func (ts *ReportType) Scan(value interface{}) error <span class="cov8" title="1">{
+        *ts = ReportType(value.(string))
+        return nil
+}</span>
+
+func (ts ReportType) Value() (driver.Value, error) <span class="cov8" title="1">{
+        return string(ts), nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package model
+
+import (
+        "database/sql/driver"
+        "encoding/json"
+        "errors"
+
+        "gorm.io/gorm"
+)
+
+type JSONMap map[string]interface{}
+
+func (j *JSONMap) Scan(value interface{}) error <span class="cov8" title="1">{
+        bytes, ok := value.([]byte)
+        if !ok </span><span class="cov0" title="0">{
+                return errors.New("type assertion to []byte failed")
+        }</span>
+
+        <span class="cov8" title="1">return json.Unmarshal(bytes, j)</span>
+}
+
+func (j JSONMap) Value() (driver.Value, error) <span class="cov8" title="1">{
+        return json.Marshal(j)
+}</span>
+
+var TASK_JSON string = `{"Archived":false, "ChatMessages":interface {}(nil), "Completed":false, "CreatedAt":"0001-01-01T00:00:00Z", "DeletedAt":interface {}(nil), "Description":"", "ID":0, "Images":interface {}(nil), "Logs":interface {}(nil), "Mesh":interface {}(nil), "Metadata":interface {}(nil), "Status":"", "Title":"", "UpdatedAt":"0001-01-01T00:00:00Z", "UserId":0}`
+
+type Task struct {
+        gorm.Model
+        Title        string
+        Description  string
+        Completed    bool
+        Status       TaskStatus `gorm:"type:TaskStatus"`
+        UserId       uint
+        Images       []AppFile     `gorm:"foreignKey:TaskId"`
+        Mesh         *AppFile      `gorm:"foreignKey:TaskId"`
+        Metadata     JSONMap       `gorm:"type:json;default:'{}'" json:"Metadata"`
+        ChatMessages []ChatMessage `gorm:"foreignKey:TaskId"`
+        Logs         []TaskLog     `gorm:"foreignKey:TaskId"`
+        Archived     bool          `gorm:"default:false"`
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package model
+
+import "database/sql/driver"
+
+type TaskStatus string
+
+const (
+        SUCCESS    TaskStatus = "SUCCESS"
+        INPROGRESS TaskStatus = "INPROGRESS"
+        FAILED     TaskStatus = "FAILED"
+        INITIAL    TaskStatus = "INITIAL"
+)
+
+func (ts *TaskStatus) Scan(value interface{}) error <span class="cov8" title="1">{
+        *ts = TaskStatus(value.(string))
+        return nil
+}</span>
+
+func (ts TaskStatus) Value() (driver.Value, error) <span class="cov8" title="1">{
+        return string(ts), nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package repositories
+
+import (
+        "github.com/Soup666/diss-api/database"
+        "github.com/Soup666/diss-api/model"
+        "gorm.io/gorm"
+)
+
+type AppFileRepositoryImpl struct {
+        DB *gorm.DB
+}
+
+func NewAppFileRepository(db *gorm.DB) AppFileRepository <span class="cov0" title="0">{
+        return &amp;AppFileRepositoryImpl{DB: db}
+}</span>
+
+func (repo *AppFileRepositoryImpl) SaveAppFile(appFile *model.AppFile) (*model.AppFile, error) <span class="cov0" title="0">{
+        if err := database.DB.Save(&amp;appFile).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return appFile, nil</span>
+}
+
+func (repo *AppFileRepositoryImpl) GetAppFilesByTask(taskID uint, fileType string) ([]model.AppFile, error) <span class="cov0" title="0">{
+        var appFiles []model.AppFile
+        if err := database.DB.Where("task_id = ? AND file_type = ?", taskID, fileType).Find(&amp;appFiles).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return appFiles, nil</span>
+}
+
+func (repo *AppFileRepositoryImpl) GetAppFileByTask(taskID uint, fileType string) (*model.AppFile, error) <span class="cov0" title="0">{
+        var appFile model.AppFile
+        if err := database.DB.Where("task_id = ? AND file_type = ?", taskID, fileType).First(&amp;appFile).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return &amp;appFile, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package repositories
+
+import (
+        "github.com/Soup666/diss-api/model"
+        "gorm.io/gorm"
+)
+
+type ChatRepositoryImpl struct {
+        DB *gorm.DB
+}
+
+func NewChatRepository(db *gorm.DB) ChatRepository <span class="cov0" title="0">{
+        return &amp;ChatRepositoryImpl{DB: db}
+}</span>
+
+// CreateChat implements ChatRepository.
+func (c *ChatRepositoryImpl) CreateChat(chat *model.ChatMessage) error <span class="cov0" title="0">{
+        if err := c.DB.Create(chat).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package repositories
+
+import (
+        "github.com/Soup666/diss-api/database"
+        models "github.com/Soup666/diss-api/model"
+        "gorm.io/gorm"
+)
+
+type CollectionsRepositoryImpl struct {
+        DB *gorm.DB
+}
+
+func NewCollectionsRepository(db *gorm.DB) CollectionsRepository <span class="cov8" title="1">{
+        return &amp;CollectionsRepositoryImpl{DB: db}
+}</span>
+
+func (repo *CollectionsRepositoryImpl) GetCollectionsByUser(userID uint) ([]models.Collection, error) <span class="cov0" title="0">{
+        var collections []models.Collection
+        if err := database.DB.
+                Preload("Tasks").
+                Where("user_id = ?", userID).
+                Find(&amp;collections).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return collections, nil</span>
+}
+
+func (repo *CollectionsRepositoryImpl) GetCollectionByID(collectionID uint) (*models.Collection, error) <span class="cov8" title="1">{
+        var collection models.Collection
+        if err := database.DB.
+                Preload("Tasks").
+                Model(&amp;models.Collection{}).
+                Where("id = ?", collectionID).
+                First(&amp;collection).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;collection, nil</span>
+}
+
+func (repo *CollectionsRepositoryImpl) CreateCollection(collection *models.Collection) error <span class="cov8" title="1">{
+        if err := database.DB.
+                Model(&amp;models.Collection{}).
+                Create(collection).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (repo *CollectionsRepositoryImpl) SaveCollection(collection *models.Collection) error <span class="cov8" title="1">{
+        if err := database.DB.Save(collection).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (repo *CollectionsRepositoryImpl) ArchiveCollection(collectionID uint) error <span class="cov0" title="0">{
+        if err := database.DB.Delete(&amp;models.Collection{}, collectionID).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (repo *CollectionsRepositoryImpl) GetCollectionTasks(collectionID uint) ([]models.Task, error) <span class="cov0" title="0">{
+        var tasks []models.Task
+        if err := database.DB.Model(&amp;models.Collection{}).
+                Where("id = ?", collectionID).
+                Association("Tasks").Find(&amp;tasks); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return tasks, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package repositories
+
+import (
+        "github.com/Soup666/diss-api/database"
+        models "github.com/Soup666/diss-api/model"
+        "gorm.io/gorm"
+)
+
+type ReportsRepositoryImpl struct {
+        DB *gorm.DB
+}
+
+func NewReportsRepository(db *gorm.DB) ReportsRepository <span class="cov8" title="1">{
+        return &amp;ReportsRepositoryImpl{DB: db}
+}</span>
+
+func (repo *ReportsRepositoryImpl) GetReportsByUser(userID uint) ([]models.Report, error) <span class="cov0" title="0">{
+        var reports []models.Report
+        if err := database.DB.Model(&amp;models.Report{}).Where("user_id = ?", userID).Find(&amp;reports).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return reports, nil</span>
+}
+
+func (repo *ReportsRepositoryImpl) GetReportByID(reportID uint) (*models.Report, error) <span class="cov8" title="1">{
+        var report models.Report
+        if err := database.DB.Model(&amp;models.Report{}).Where("id = ?", reportID).First(&amp;report).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;report, nil</span>
+}
+
+func (repo *ReportsRepositoryImpl) CreateReport(report *models.Report) error <span class="cov8" title="1">{
+        if err := database.DB.Model(&amp;models.Report{}).Create(report).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (repo *ReportsRepositoryImpl) SaveReport(report *models.Report) error <span class="cov8" title="1">{
+        if err := database.DB.Save(report).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (repo *ReportsRepositoryImpl) ArchiveReport(reportID uint) error <span class="cov0" title="0">{
+        if err := database.DB.Delete(&amp;models.Report{}, reportID).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package repositories
+
+import (
+        "github.com/Soup666/diss-api/database"
+        models "github.com/Soup666/diss-api/model"
+        "gorm.io/gorm"
+)
+
+type TaskRepositoryImpl struct {
+        DB *gorm.DB
+}
+
+func NewTaskRepository(db *gorm.DB) TaskRepository <span class="cov8" title="1">{
+        return &amp;TaskRepositoryImpl{DB: db}
+}</span>
+
+func (repo *TaskRepositoryImpl) GetUnarchivedTasks(userID uint) ([]*models.Task, error) <span class="cov0" title="0">{
+        var tasks []*models.Task
+        if err := database.DB.
+                Where("user_id = ?", userID).
+                Where("archived = ?", false).
+                Find(&amp;tasks).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return tasks, nil</span>
+}
+
+func (repo *TaskRepositoryImpl) GetArchivedTasks(userID uint) ([]*models.Task, error) <span class="cov0" title="0">{
+        var tasks []*models.Task
+        if err := database.DB.
+                Where("user_id = ?", userID).
+                Where("archived = ?", true).
+                Find(&amp;tasks).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return tasks, nil</span>
+}
+
+func (repo *TaskRepositoryImpl) GetTaskByID(taskID uint) (*models.Task, error) <span class="cov8" title="1">{
+        var task models.Task
+        if err := database.DB.Where("id = ?", taskID).Preload("ChatMessages").Preload("Images").First(&amp;task).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;task, nil</span>
+}
+
+// CreateTask creates a new task in the database
+func (repo *TaskRepositoryImpl) CreateTask(task *models.Task) error <span class="cov8" title="1">{
+        if err := database.DB.Create(task).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (repo *TaskRepositoryImpl) SaveTask(task *models.Task) error <span class="cov8" title="1">{
+        if err := database.DB.Save(task).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (repo *TaskRepositoryImpl) ArchiveTask(taskID uint) (*models.Task, error) <span class="cov0" title="0">{
+        task, err := repo.GetTaskByID(taskID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">task.Archived = true
+        if err := database.DB.Save(task).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return task, nil</span>
+}
+
+func (repo *TaskRepositoryImpl) UnarchiveTask(taskID uint) (*models.Task, error) <span class="cov0" title="0">{
+        task, err := repo.GetTaskByID(taskID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">task.Archived = false
+        if err := database.DB.Save(task).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return task, nil</span>
+}
+
+func (repo *TaskRepositoryImpl) AddLog(taskID uint, log string) error <span class="cov0" title="0">{
+        task, err := repo.GetTaskByID(taskID)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">newLog := models.TaskLog{
+                TaskId:  task.ID,
+                Message: log,
+        }
+
+        task.Logs = append(task.Logs, newLog)
+
+        if err := database.DB.Save(task).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package repositories
+
+import (
+        models "github.com/Soup666/diss-api/model"
+        "gorm.io/gorm"
+)
+
+type UserAnalyticsRepositoryImpl struct {
+        DB *gorm.DB
+}
+
+func NewUserAnalyticsRepository(db *gorm.DB) UserAnalyticsRepository <span class="cov0" title="0">{
+        return &amp;UserAnalyticsRepositoryImpl{DB: db}
+}</span>
+
+func (r *UserAnalyticsRepositoryImpl) GetAnalytics(userID uint) (*models.UserAnalytics, error) <span class="cov0" title="0">{
+        var analytics models.UserAnalytics
+
+        err := r.DB.Transaction(func(tx *gorm.DB) error </span><span class="cov0" title="0">{
+                // Fetch user to ensure it exists
+                var user models.User
+                if err := tx.Where("id = ?", userID).First(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                // Fetch all analytics data in a single query
+                <span class="cov0" title="0">rows := tx.Raw(`
+                        SELECT 
+                                (SELECT COUNT(*) FROM users WHERE id = ?) AS collection_total,
+                                (SELECT COUNT(*) FROM tasks WHERE user_id = ? AND completed = true) AS tasks_success,
+                                (SELECT COUNT(*) FROM tasks WHERE user_id = ? AND completed = false) AS tasks_failed,
+                                (SELECT COUNT(*) FROM tasks WHERE user_id = ?) AS tasks_total
+                        `, userID, userID, userID, userID).Row()
+
+                // Scan the results into the analytics struct
+                if err := rows.Scan(&amp;analytics.CollectionTotal, &amp;analytics.TasksSuccess, &amp;analytics.TasksFailed, &amp;analytics.TasksTotal); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                // Fetch weekly tasks data
+                <span class="cov0" title="0">if err := tx.Raw(`
+                        SELECT to_char(created_at, 'dd.mm.YYYY') as date, COUNT(*) as count
+                        FROM tasks
+                        WHERE user_id = ?
+                        GROUP BY date
+                `, userID).Scan(&amp;analytics.WeekOfTasks).Error; err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                // Fetch collections data
+                <span class="cov0" title="0">if err := tx.Raw(`
+                                SELECT c.name as name, COUNT(ct.task_id) as count
+                                FROM collections c
+                                LEFT JOIN collection_tasks ct ON ct.collection_id = c.id
+                                WHERE c.user_id = ?
+                                GROUP BY c.name
+                `, userID).Scan(&amp;analytics.Collections).Error; err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov0" title="0">return nil</span>
+        })
+
+        <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return &amp;analytics, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package repositories
+
+import (
+        "github.com/Soup666/diss-api/database"
+        models "github.com/Soup666/diss-api/model"
+        "gorm.io/gorm"
+)
+
+type UserRepositoryImpl struct {
+        DB *gorm.DB
+}
+
+func NewUserRepository(db *gorm.DB) UserRepository <span class="cov8" title="1">{
+        return &amp;UserRepositoryImpl{DB: db}
+}</span>
+
+func (repo *UserRepositoryImpl) GetUserFromFirebaseUID(apiKey string) (*models.User, error) <span class="cov8" title="1">{
+        var user models.User
+        if err := database.DB.Where("firebase_uid = ?", apiKey).First(&amp;user).Error; err != nil </span><span class="cov8" title="1">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov8" title="1">{
+                        return nil, nil
+                }</span>
+                <span class="cov0" title="0">return nil, err</span>
+        }
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (repo *UserRepositoryImpl) Create(user *models.User) error <span class="cov8" title="1">{
+        return repo.DB.Create(&amp;user).Error
+}</span>
+
+func (repo *UserRepositoryImpl) UpdateUser(user *models.User) error <span class="cov8" title="1">{
+        return repo.DB.Save(&amp;user).Error
+}</span>
+
+func (repo *UserRepositoryImpl) GetUsers() ([]*models.User, error) <span class="cov8" title="1">{
+        var users []*models.User
+        if err := database.DB.Find(&amp;users).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return users, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package router
+
+import (
+        "github.com/Soup666/diss-api/controller"
+        "github.com/Soup666/diss-api/middleware"
+        "github.com/Soup666/diss-api/services"
+        "github.com/gin-gonic/gin"
+        swaggerFiles "github.com/swaggo/files"
+        ginSwagger "github.com/swaggo/gin-swagger"
+
+        _ "github.com/Soup666/diss-api/docs"
+)
+
+func NewRouter(
+        authController *controller.AuthController,
+        taskController *controller.TaskController,
+        uploadController *controller.UploadController,
+        objectController *controller.ObjectController,
+        visionController *controller.VisionController,
+        authService services.AuthService,
+        reportsController *controller.ReportsController,
+        collectionsController *controller.CollectionsController,
+        userAnalyticsController *controller.UserAnalyticsController,
+        notificationController *controller.NotificationController,
+) *gin.Engine <span class="cov0" title="0">{
+
+        r := gin.Default()
+
+        // Global middlewares
+        r.Use(middleware.CORSMiddleware())
+
+        // Swagger route
+        r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+        // Authenticated routes
+        authRequired := r.Group("/")
+        authRequired.Use(middleware.AuthMiddleware(authService))
+
+        // Authentication routes
+        authRequired.POST("/verify", authController.Verify)
+        authRequired.PATCH("/verify", authController.Verify)
+
+        // Tasks (protected by AuthMiddleware)
+        authRequired.GET("/tasks", taskController.GetUnarchivedTasks)
+        authRequired.GET("/archived/tasks", taskController.GetArchivedTasks)
+        authRequired.POST("/tasks", taskController.CreateTask)
+        authRequired.PUT("/tasks", taskController.UpdateTask)
+        authRequired.GET("/tasks/:taskID", taskController.GetTask)
+        authRequired.POST("/tasks/:taskID/upload", taskController.UploadFileToTask)
+        authRequired.POST("/tasks/:taskID/start", taskController.StartProcess)
+        authRequired.POST("/tasks/:taskID/message", taskController.SendMessage)
+        authRequired.POST("/tasks/:taskID/archive", taskController.ArchiveTask)
+        authRequired.POST("/tasks/:taskID/unarchive", taskController.UnarchiveTask)
+
+        // Anlytics
+        authRequired.GET("/analytics", userAnalyticsController.GetAnalytics)
+
+        // Reports
+        authRequired.GET("/reports", reportsController.GetReports)
+        authRequired.POST("/reports", reportsController.CreateReport)
+        authRequired.GET("/reports/:reportID", reportsController.GetReportByID)
+        authRequired.PUT("/reports", reportsController.SaveReport)
+
+        // Collections
+        authRequired.GET("/collections", collectionsController.GetCollections)
+        authRequired.POST("/collections", collectionsController.CreateCollection)
+        authRequired.GET("/collections/:collectionID", collectionsController.GetCollection)
+        authRequired.PUT("/collections", collectionsController.SaveCollection)
+        authRequired.DELETE("/collections/:collectionID", collectionsController.ArchiveCollection)
+
+        // Image analysis
+        authRequired.POST("/analyze", visionController.AnalyzeImage)
+        authRequired.POST("/analyze/:taskID", visionController.AnalyzeTask)
+
+        // Debug
+        authRequired.POST("/debug/notification", notificationController.SendMessage)
+
+        // Unauthenticated routes
+        r.POST("/uploads", uploadController.UploadFile)
+        r.GET("/uploads/:taskId/:filename", uploadController.GetFile)
+        r.GET("/objects/:taskID/model", objectController.GetObject)
+
+        return r
+}</span>
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package utils
+
+import (
+        "archive/tar"
+        "compress/gzip"
+        "fmt"
+        "io"
+        "os"
+        "path/filepath"
+
+        "github.com/bodgit/sevenzip"
+)
+
+type FileUtil struct{}
+
+func NewFileUtil() *FileUtil <span class="cov8" title="1">{
+        return &amp;FileUtil{}
+}</span>
+
+// CopyFile copies a file from src to dest
+func (f *FileUtil) CopyFile(src, dest string) error <span class="cov0" title="0">{
+        from, err := os.Open(src)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">defer from.Close()
+
+        to, err := os.Create(dest)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">defer to.Close()
+
+        _, err = io.Copy(to, from)
+        return err</span>
+}
+
+// ExtractTarGz extracts a .tar.gz file from an io.Reader to a destination directory
+func (f *FileUtil) ExtractTarGz(gzipStream io.Reader, destDir string) error <span class="cov0" title="0">{
+        uncompressedStream, err := gzip.NewReader(gzipStream)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">defer uncompressedStream.Close()
+
+        tarReader := tar.NewReader(uncompressedStream)
+
+        for </span><span class="cov0" title="0">{
+                header, err := tarReader.Next()
+
+                switch </span>{
+                case err == io.EOF:<span class="cov0" title="0">
+                        return nil</span>
+                case err != nil:<span class="cov0" title="0">
+                        return err</span>
+                case header == nil:<span class="cov0" title="0">
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">target := filepath.Join(destDir, header.Name)
+
+                switch header.Typeflag </span>{
+                case tar.TypeDir:<span class="cov0" title="0">
+                        if err := os.MkdirAll(target, os.FileMode(header.Mode)); err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                case tar.TypeReg:<span class="cov0" title="0">
+                        if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                        <span class="cov0" title="0">outFile, err := os.Create(target)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                        <span class="cov0" title="0">if _, err := io.Copy(outFile, tarReader); err != nil </span><span class="cov0" title="0">{
+                                outFile.Close()
+                                return err
+                        }</span>
+                        <span class="cov0" title="0">outFile.Close()</span>
+                default:<span class="cov0" title="0">
+                        fmt.Printf("Unknown type: %v in %s\n", header.Typeflag, header.Name)</span>
+                }
+        }
+}
+
+func extractFile(file *sevenzip.File, destDir string) error <span class="cov0" title="0">{
+        rc, err := file.Open()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">defer rc.Close()
+
+        // Extract the file
+        targetPath := filepath.Join(destDir, file.Name)
+        if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">outFile, err := os.Create(targetPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">defer outFile.Close()
+
+        if _, err := io.Copy(outFile, rc); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (f *FileUtil) Extract7z(archive string, destDir string) error <span class="cov8" title="1">{
+        r, err := sevenzip.OpenReader(archive)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov0" title="0">defer r.Close()
+
+        for _, f := range r.File </span><span class="cov0" title="0">{
+                fmt.Printf("Extracting %s\n", f.Name)
+
+                targetPath := filepath.Join(destDir, f.Name)
+
+                if f.FileInfo().IsDir() </span><span class="cov0" title="0">{
+                        if err := os.MkdirAll(targetPath, f.Mode()); err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                        <span class="cov0" title="0">continue</span>
+                }
+
+                <span class="cov0" title="0">if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov0" title="0">if err = extractFile(f, destDir); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">package utils
+
+import (
+        "bytes"
+        "encoding/json"
+        "io"
+        "net/http/httptest"
+
+        "github.com/Soup666/diss-api/model"
+        "github.com/gin-gonic/gin"
+        "gorm.io/gorm"
+)
+
+func SetupRecorder() (*httptest.ResponseRecorder, *gin.Context) <span class="cov8" title="1">{
+        recorder := httptest.NewRecorder()
+
+        c, _ := gin.CreateTestContext(recorder)
+        c.Set("user", &amp;model.User{Model: gorm.Model{ID: 1}})
+
+        return recorder, c
+}</span>
+
+func MockJsonPost(c *gin.Context /* the test context */, content interface{}) <span class="cov0" title="0">{
+        jsonbytes, err := json.Marshal(content)
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+
+        // the request body must be an io.ReadCloser
+        // the bytes buffer though doesn't implement io.Closer,
+        // so you wrap it in a no-op closer
+        <span class="cov0" title="0">c.Request.Body = io.NopCloser(bytes.NewBuffer(jsonbytes))</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
