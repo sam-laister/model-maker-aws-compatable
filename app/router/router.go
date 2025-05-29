@@ -80,5 +80,9 @@ func NewRouter(
 	r.GET("/uploads/:taskId/:filename", uploadController.GetFile)
 	r.GET("/objects/:taskID/model", objectController.GetObject)
 
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	return r
 }
