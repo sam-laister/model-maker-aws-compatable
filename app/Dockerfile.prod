@@ -7,6 +7,7 @@
 FROM ubuntu:22.04 AS cv_builder
 
 ENV DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Install only build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -88,13 +89,16 @@ FROM ubuntu:22.04 AS final
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/false appuser
 
+ENV DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
+
 # Install only runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libcgal-qt5-dev libceres2 libboost-system1.74.0 libboost-filesystem1.74.0 \
     libboost-program-options1.74.0 libboost-serialization1.74.0 \
     libopencv-core4.5d libopencv-imgproc4.5d libopencv-imgcodecs4.5d \
     libjpeg8 libpng16-16 libtiff5 libglu1-mesa libglew2.2 \
-    libglfw3 libgomp1 ca-certificates curl wget && \
+    libglfw3 libgomp1 ca-certificates curl wget libboost-all-dev libopencv-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy OpenMVG/OpenMVS binaries and libraries
@@ -126,7 +130,7 @@ COPY --chown=appuser:appuser entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Set environment variables
-ENV PATH="/usr/local/bin:$PATH" \
+ENV PATH="/usr/local/bin:/usr/local/bin/OpenMVS:$PATH" \
     PORT=3333 \
     GIN_MODE=release \
     LOG_LEVEL=info \
