@@ -1,5 +1,7 @@
 # Go Backend Rest Api for the project
 
+UPDATE: This repo is outdated. It has been merged with the docker parent repo at: https://github.com/2024-dissertation/model-maker-docker
+
 ## New Method
 
 As of 17/01/25, migrations are now handled with [Goose](https://github.com/pressly/goose) and [Upper.io](https://upper.io/v4/adapter/postgresql/) Postgresql Adapter. 
