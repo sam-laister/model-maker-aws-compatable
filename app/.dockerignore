@@ -46,7 +46,6 @@ temp/
 tmp/
 
 # Build artifacts (keep only source)
-bin/
 build/
 dist/
 target/

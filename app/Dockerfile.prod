@@ -108,12 +108,18 @@ COPY --from=blender_builder /opt/blender/4.4/ /opt/blender/4.4/
 # Copy Go application
 COPY --from=go_builder /app/server /usr/local/bin/server
 
+WORKDIR /app
+
+# Copy utilities
+COPY ./bin /app/bin
+
 # Update library cache
 RUN ldconfig
 
 # Create app directory with proper permissions
 RUN mkdir -p /app /app/data /app/logs && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chown -R appuser:appuser /usr/local/bin 
 
 # Copy entrypoint script
 COPY --chown=appuser:appuser entrypoint.sh /app/entrypoint.sh
@@ -129,7 +135,6 @@ ENV PATH="/usr/local/bin:$PATH" \
 # Switch to non-root user
 USER appuser
 
-WORKDIR /app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
