@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"firebase.google.com/go/v4/messaging"
 	"github.com/Soup666/diss-api/model"
@@ -21,7 +22,7 @@ func (s *NotificationServiceImpl) SendMessage(notification *model.Notification) 
 	ctx := context.Background()
 	client, err := fcm.NewClient(
 		ctx,
-		fcm.WithCredentialsFile("./service-account-key.json"),
+		fcm.WithCredentialsFile(os.Getenv("GOOGLE_CREDENTIALS_FILE")),
 	)
 	if err != nil {
 		log.Fatal(err)
