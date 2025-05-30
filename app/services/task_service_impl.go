@@ -514,6 +514,20 @@ func (s *TaskServiceImpl) AddLog(taskID uint, log string) error {
 }
 
 func (s *TaskServiceImpl) EnqueueJob(job TaskJob) bool {
+
+	// Update status of queued task to QUEUED
+	task, err := s.taskRepo.GetTaskByID(job.ID)
+	if err != nil {
+		return false
+	}
+
+	task.Status = "QUEUED"
+	err = s.taskRepo.SaveTask(task)
+
+	if err != nil {
+		return false
+	}
+
 	select {
 	case s.jobQueue <- job:
 		return true
@@ -526,11 +540,14 @@ func (s *TaskServiceImpl) StartWorker() {
 	go func() {
 		for job := range s.jobQueue {
 			fmt.Printf("Processing job: %+v\n", job)
-			task, err := s.taskRepo.GetTaskByID(job.ID)
-			if err != nil {
-				continue
-			}
-			s.RunPhotogrammetryProcess(task)
+			// Simulate delay before processing the job
+			time.Sleep(10 * time.Second)
+
+			// task, err := s.taskRepo.GetTaskByID(job.ID)
+			// if err != nil {
+			// 	continue
+			// }
+			// s.RunPhotogrammetryProcess(task)
 		}
 	}()
 }
