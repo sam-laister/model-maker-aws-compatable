@@ -82,7 +82,7 @@ jobs:
           mkdir build
           go vet ./...
           go build ./...
-          make test-cover-github
+          make test-cover
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
