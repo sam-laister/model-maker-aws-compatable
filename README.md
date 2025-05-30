@@ -2,7 +2,7 @@
 
 <img align="right" width="125" src="assets/app-icon.png">
 
-[![Go Tests](https://github.com/2024-dissertation/go-api/actions/workflows/test.yml/badge.svg)](https://github.com/2024-dissertation/go-api/actions/workflows/test.yml)
+[![Model Maker CI](https://github.com/2024-dissertation/model-maker-docker/actions/workflows/ci.yml/badge.svg)](https://github.com/2024-dissertation/model-maker-docker/actions/workflows/ci.yml)
 
 Model Maker is an accessible and Open Source solution to Photogrammetry. This is the backend for the also open source [Flutter App](https://github.com/2024-dissertation/model-maker-app).
 
