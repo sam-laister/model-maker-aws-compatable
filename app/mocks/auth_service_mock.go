@@ -2,7 +2,7 @@ package mocks
 
 import (
 	"firebase.google.com/go/v4/auth"
-	models "github.com/Soup666/diss-api/model"
+	models "github.com/Soup666/modelmaker/model"
 	"github.com/stretchr/testify/mock"
 )
 

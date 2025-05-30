@@ -12,9 +12,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Soup666/diss-api/database"
-	"github.com/Soup666/diss-api/model"
-	services "github.com/Soup666/diss-api/services"
+	"github.com/Soup666/modelmaker/database"
+	"github.com/Soup666/modelmaker/model"
+	services "github.com/Soup666/modelmaker/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )

@@ -1,8 +1,8 @@
 package services
 
 import (
-	models "github.com/Soup666/diss-api/model"
-	repositories "github.com/Soup666/diss-api/repository"
+	models "github.com/Soup666/modelmaker/model"
+	repositories "github.com/Soup666/modelmaker/repository"
 )
 
 type AppFileServiceImpl struct {

@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Soup666/diss-api/database"
-	models "github.com/Soup666/diss-api/model"
+	"github.com/Soup666/modelmaker/database"
+	models "github.com/Soup666/modelmaker/model"
 
 	"github.com/gin-gonic/gin"
 )

@@ -7,8 +7,8 @@ import (
 	"os"
 	"strconv"
 
-	repositories "github.com/Soup666/diss-api/repository"
-	services "github.com/Soup666/diss-api/services"
+	repositories "github.com/Soup666/modelmaker/repository"
+	services "github.com/Soup666/modelmaker/services"
 	"github.com/gin-gonic/gin"
 )
 

@@ -1,8 +1,8 @@
 package services
 
 import (
-	"github.com/Soup666/diss-api/model"
-	repositories "github.com/Soup666/diss-api/repository"
+	"github.com/Soup666/modelmaker/model"
+	repositories "github.com/Soup666/modelmaker/repository"
 )
 
 type ReportsServiceImpl struct {

@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"github.com/Soup666/diss-api/model"
+	"github.com/Soup666/modelmaker/model"
 )
 
 type AppFileRepository interface {

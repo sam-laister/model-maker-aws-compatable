@@ -6,14 +6,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Soup666/diss-api/middleware"
-	"github.com/Soup666/diss-api/mocks"
+	"github.com/Soup666/modelmaker/middleware"
+	"github.com/Soup666/modelmaker/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 
 	"firebase.google.com/go/v4/auth"
-	models "github.com/Soup666/diss-api/model"
+	models "github.com/Soup666/modelmaker/model"
 )
 
 func TestAuthMiddleware(t *testing.T) {

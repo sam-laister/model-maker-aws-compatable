@@ -114,12 +114,6 @@ preflight_checks() {
         fi
     done
     
-    # Check write permissions
-    if [ ! -w "/app/data" ]; then
-        error "No write permission to /app/data directory"
-        exit 1
-    fi
-    
     log "Pre-flight checks completed successfully"
 }
 

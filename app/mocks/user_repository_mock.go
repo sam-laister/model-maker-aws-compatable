@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	models "github.com/Soup666/diss-api/model"
+	models "github.com/Soup666/modelmaker/model"
 	"github.com/stretchr/testify/mock"
 )
 

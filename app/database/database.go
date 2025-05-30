@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Soup666/diss-api/model"
+	"github.com/Soup666/modelmaker/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

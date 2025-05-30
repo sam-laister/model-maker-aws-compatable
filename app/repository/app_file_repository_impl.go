@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"github.com/Soup666/diss-api/database"
-	"github.com/Soup666/diss-api/model"
+	"github.com/Soup666/modelmaker/database"
+	"github.com/Soup666/modelmaker/model"
 	"gorm.io/gorm"
 )
 

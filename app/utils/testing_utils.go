@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http/httptest"
 
-	"github.com/Soup666/diss-api/model"
+	"github.com/Soup666/modelmaker/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )

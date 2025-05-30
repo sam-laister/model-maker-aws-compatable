@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Soup666/diss-api/mocks"
-	models "github.com/Soup666/diss-api/model"
-	"github.com/Soup666/diss-api/services"
+	"github.com/Soup666/modelmaker/mocks"
+	models "github.com/Soup666/modelmaker/model"
+	"github.com/Soup666/modelmaker/services"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )

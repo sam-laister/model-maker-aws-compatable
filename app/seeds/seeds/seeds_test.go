@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Soup666/diss-api/seeds/seeds"
+	"github.com/Soup666/modelmaker/seeds/seeds"
 	"github.com/stretchr/testify/assert"
 )
 

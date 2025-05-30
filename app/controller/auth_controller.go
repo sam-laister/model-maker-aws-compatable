@@ -3,8 +3,8 @@ package controller
 import (
 	"net/http"
 
-	models "github.com/Soup666/diss-api/model"
-	services "github.com/Soup666/diss-api/services"
+	models "github.com/Soup666/modelmaker/model"
+	services "github.com/Soup666/modelmaker/services"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,23 +1,32 @@
-name: Go Tests
+name: Model Maker CI
+# credit: https://github.com/pressly/goose/blob/main/.github/workflows/ci.yaml
 
 on:
   push:
     branches:
       - main
+      - develop
   pull_request:
-  workflow_dispatch:
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
   test:
+    name: Run unit tests
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        go-version: [oldstable, stable]
+        os: [ubuntu-latest]
+
     runs-on: ubuntu-latest
 
     services:
@@ -37,19 +46,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
+        uses: actions/checkout@v4
+      - name: Install Go
         uses: actions/setup-go@v5.4.0
-
-      - name: Install dependencies
-        run: go mod tidy
-
       - name: Install Go Tools
         run: |
           go install github.com/joho/godotenv/cmd/godotenv@latest && \
           go install github.com/nikolaydubina/go-cover-treemap@latest
-
       - name: Wait for PostgreSQL to be ready
         run: |
           for i in {1..10}; do
@@ -60,7 +63,16 @@ jobs:
             echo "Waiting for PostgreSQL..."
             sleep 5
           done
-
+      - name: Check Go code formatting
+        run: |
+          cd app
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            gofmt -s -l .
+            echo "Please format Go code by running: go fmt ./..."
+            exit 1
+          fi
+      - name: Install tparse
+        run: go install github.com/mfridman/tparse@main
       - name: Run tests
         env:
           POSTGRES_HOST: localhost
@@ -68,14 +80,17 @@ jobs:
           POSTGRES_PASSWORD: changeme
           POSTGRES_DB: appdb_test
         run: |
-          godotenv -f .env.github go test -coverprofile=cp.out -coverpkg="github.com/Soup666/diss-api,github.com/Soup666/diss-api/cmd/vision,github.com/Soup666/diss-api/controller,github.com/Soup666/diss-api/database,github.com/Soup666/diss-api/docs,github.com/Soup666/diss-api/middleware,github.com/Soup666/diss-api/middleware_test,github.com/Soup666/diss-api/model,github.com/Soup666/diss-api/repository,github.com/Soup666/diss-api/router,github.com/Soup666/diss-api/seed,github.com/Soup666/diss-api/seeder,github.com/Soup666/diss-api/seeds,github.com/Soup666/diss-api/services,github.com/Soup666/diss-api/utils" ./... &&
-          go tool cover -html=cp.out -o cover/index.html &&
-          go-cover-treemap -coverprofile=cp.out > out.svg
+          cd app
+          mkdir build
+          go vet ./...
+          go build ./...
+          make test-packages
+          make test-cover
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './cover'
-  
+          path: "./cover"
+
   deploy:
     environment:
       name: github-pages

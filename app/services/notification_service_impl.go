@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"firebase.google.com/go/v4/messaging"
-	"github.com/Soup666/diss-api/model"
+	"github.com/Soup666/modelmaker/model"
 	fcm "github.com/appleboy/go-fcm"
 )
 

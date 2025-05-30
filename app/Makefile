@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := build-and-run
 
-BIN_FILE=main.out
+GO_TEST_FLAGS ?= -race -count=1 -v -timeout=5m -json
 
-PKGS := github.com/Soup666/diss-api/cmd/vision,github.com/Soup666/diss-api/database,github.com/Soup666/diss-api/docs,github.com/Soup666/diss-api/middleware,github.com/Soup666/diss-api/middleware_test,github.com/Soup666/diss-api/model,github.com/Soup666/diss-api/repository,github.com/Soup666/diss-api/router,github.com/Soup666/diss-api/seed,github.com/Soup666/diss-api/seeder,github.com/Soup666/diss-api/seeds,github.com/Soup666/diss-api/utils
+BIN_FILE=main.out
 
 build-and-run: build run
 
@@ -27,10 +27,13 @@ test:
 
 test-cover:
 	echo "Running tests with coverage..."
-	@echo "${COVERPKG}"
-	@godotenv -f .env.test go test -coverprofile=cp.out -coverpkg=$(PKGS) ./...
+	@godotenv -f .env.test go test $(GO_TEST_FLAGS) -coverprofile=cp.out -coverpkg=$$(go list ./... | grep -v -e /bin -e /cmd -e /examples) ./...
 	@go tool cover -html=cp.out -o cover.html
 	@go-cover-treemap -coverprofile=cp.out > out.svg
+
+test-packages:
+	go test $(GO_TEST_FLAGS) $$(go list ./... | grep -v -e /bin -e /cmd -e /examples) |\
+		tparse --follow -sort=elapsed -trimpath=auto -all
 
 doc:
 	swag init

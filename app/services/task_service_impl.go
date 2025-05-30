@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
-	models "github.com/Soup666/diss-api/model"
-	repositories "github.com/Soup666/diss-api/repository"
+	models "github.com/Soup666/modelmaker/model"
+	repositories "github.com/Soup666/modelmaker/repository"
 	"gorm.io/gorm"
 )
 

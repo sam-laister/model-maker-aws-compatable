@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Soup666/diss-api/utils"
+	"github.com/Soup666/modelmaker/utils"
 )
 
 func MakeBackup() error {

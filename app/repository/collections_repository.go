@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	models "github.com/Soup666/diss-api/model"
+	models "github.com/Soup666/modelmaker/model"
 )
 
 type CollectionsRepository interface {
