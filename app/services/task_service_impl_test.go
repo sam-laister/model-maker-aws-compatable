@@ -175,7 +175,7 @@ func TestTaskService(t *testing.T) {
 		mockChatRepository.AssertCalled(t, "CreateChat", mock.Anything)
 		assert.NoError(t, err)
 		assert.NotNil(t, chat)
-		assert.NotNil(t, chat.Id)
+		assert.NotNil(t, chat.ID)
 		assert.Equal(t, chat.Message, "Hello World")
 	})
 

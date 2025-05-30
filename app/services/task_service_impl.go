@@ -515,19 +515,6 @@ func (s *TaskServiceImpl) AddLog(taskID uint, log string) error {
 
 func (s *TaskServiceImpl) EnqueueJob(job TaskJob) bool {
 
-	// Update status of queued task to QUEUED
-	task, err := s.taskRepo.GetTaskByID(job.ID)
-	if err != nil {
-		return false
-	}
-
-	task.Status = "QUEUED"
-	err = s.taskRepo.SaveTask(task)
-
-	if err != nil {
-		return false
-	}
-
 	select {
 	case s.jobQueue <- job:
 		return true

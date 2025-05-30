@@ -300,12 +300,12 @@ func (c *TaskController) StartProcess(ctx *gin.Context) {
 	}
 
 	task.Completed = false
+	task.Status = "QUEUED"
+
 	if err := c.TaskService.SaveTask(task); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update task"})
 		return
 	}
-
-	// Respond to the client immediately
 
 	// Add job to queue
 	if !c.TaskService.EnqueueJob(
