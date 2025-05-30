@@ -178,4 +178,20 @@ func TestTaskService(t *testing.T) {
 		assert.NotNil(t, chat.Id)
 		assert.Equal(t, chat.Message, "Hello World")
 	})
+
+	t.Run("EnqueueJob", func(t *testing.T) {
+		job := services.TaskJob{ID: 1}
+
+		// Enqueue the job
+		taskService.EnqueueJob(job)
+
+		// Read from the queue to verify
+		select {
+		case queuedJob := <-taskService.GetJobQueue():
+			assert.Equal(t, job.ID, queuedJob.ID)
+		default:
+			t.Fatal("Job was not enqueued")
+		}
+
+	})
 }

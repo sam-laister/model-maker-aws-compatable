@@ -306,9 +306,16 @@ func (c *TaskController) StartProcess(ctx *gin.Context) {
 	}
 
 	// Respond to the client immediately
-	ctx.JSON(http.StatusAccepted, gin.H{"message": "Process started."})
 
-	go c.TaskService.RunPhotogrammetryProcess(task)
+	// Add job to queue
+	if !c.TaskService.EnqueueJob(
+		services.TaskJob{ID: task.ID},
+	) {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Task queue is full"})
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, gin.H{"message": "Process started."})
 }
 
 func (c *TaskController) UpdateTask(ctx *gin.Context) {
