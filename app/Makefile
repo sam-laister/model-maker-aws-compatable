@@ -27,14 +27,7 @@ test:
 
 test-cover:
 	echo "Running tests with coverage..."
-	godotenv -f .env.test go test $(GO_TEST_FLAGS) -coverprofile=cp.out -coverpkg=$$(go list ./... | grep -v -e /bin -e /cmd -e /examples) ./... |\
-		tparse --follow -sort=elapsed -trimpath=auto -all
-	go tool cover -html=cp.out -o cover.html
-	go-cover-treemap -coverprofile=cp.out > out.svg
-
-test-cover-github:
-	echo "Running tests with coverage..."
-	godotenv -f .env.gitbub go test $(GO_TEST_FLAGS) -coverprofile=cp.out -coverpkg=$$(go list ./... | grep -v -e /bin -e /cmd -e /examples) ./... |\
+	go test $(GO_TEST_FLAGS) -coverprofile=cp.out -coverpkg=$$(go list ./... | grep -v -e /bin -e /cmd -e /examples) ./... |\
 		tparse --follow -sort=elapsed -trimpath=auto -all
 	go tool cover -html=cp.out -o cover.html
 	go-cover-treemap -coverprofile=cp.out > out.svg

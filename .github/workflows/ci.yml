@@ -71,16 +71,18 @@ jobs:
         run: go install github.com/mfridman/tparse@main
       - name: Run tests
         env:
-          POSTGRES_HOST: localhost
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: changeme
-          POSTGRES_DB: appdb_test
+          DB_HOST: localhost
+          DB_NAME: appdb_test
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: changeme
+          DB_TIMEZONE: UTC
         run: |
           cd app
           mkdir build
           go vet ./...
           go build ./...
-          make test-cover
+          make test-cover-github
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
