@@ -527,14 +527,12 @@ func (s *TaskServiceImpl) StartWorker() {
 	go func() {
 		for job := range s.jobQueue {
 			fmt.Printf("Processing job: %+v\n", job)
-			// Simulate delay before processing the job
-			time.Sleep(10 * time.Second)
 
-			// task, err := s.taskRepo.GetTaskByID(job.ID)
-			// if err != nil {
-			// 	continue
-			// }
-			// s.RunPhotogrammetryProcess(task)
+			task, err := s.taskRepo.GetTaskByID(job.ID)
+			if err != nil {
+				continue
+			}
+			s.RunPhotogrammetryProcess(task)
 		}
 	}()
 }
