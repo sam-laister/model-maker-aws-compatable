@@ -40,6 +40,7 @@ RUN git clone --recursive --depth=1 https://github.com/openMVG/openMVG.git /open
     cmake -DCMAKE_BUILD_TYPE=RELEASE \
     -DCMAKE_INSTALL_PREFIX=/usr/local \
     -DOpenMVG_BUILD_EXAMPLES=OFF \
+    -DOpenMVG_USE_RERUN=OFF \
     /openMVG/src && \
     make -j$(nproc) && \
     make install
