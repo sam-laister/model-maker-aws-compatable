@@ -4,7 +4,7 @@
 # ------------------------------
 # Stage 1: Build OpenMVG/OpenMVS
 # ------------------------------
-FROM ubuntu:22.04 AS cv_builder
+FROM ubuntu:20.04 AS cv_builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_FRONTEND=noninteractive
@@ -72,7 +72,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 # ------------------------------
 # Stage 3: Build Blender (minimal)
 # ------------------------------
-FROM ubuntu:22.04 AS blender_builder
+FROM ubuntu:20.04 AS blender_builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget xz-utils && \
@@ -86,7 +86,7 @@ RUN wget -q https://download.blender.org/release/Blender4.4/blender-4.4.0-linux-
 # ------------------------------
 # Stage 4: Production Runtime
 # ------------------------------
-FROM ubuntu:22.04 AS final
+FROM ubuntu:20.04 AS final
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/false appuser
