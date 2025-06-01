@@ -23,6 +23,7 @@ RUN apt-get install -y --no-install-recommends \
     cmake build-essential git ca-certificates \
     python3-dev libboost-system-dev libboost-filesystem-dev \
     libboost-program-options-dev libboost-serialization-dev \
+    libboost-iostreams-dev \
     libopencv-dev \
     libpng-dev \
     libjpeg-dev libtiff-dev libglu1-mesa-dev \
