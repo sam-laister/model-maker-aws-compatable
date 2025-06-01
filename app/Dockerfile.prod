@@ -9,14 +9,14 @@ FROM ubuntu:22.04 AS cv_builder
 ENV DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN sed -i 's|http://archive.ubuntu.com/ubuntu|http://mirrors.ubuntu.com/mirrors.txt|' /etc/apt/sources.list
-
 # Install only build dependencies
 # Seperate for cache issues
 RUN apt-get update
 RUN apt-get install -y --fix-missing --no-install-recommends \
     cmake build-essential git ca-certificates \
-    python3-dev libboost-all-dev libopencv-dev \
+    python3-dev libboost-system-dev libboost-filesystem-dev \
+    libboost-program-options-dev libboost-serialization-dev \
+    libopencv-dev \
     libjpeg-dev libpng-dev libtiff-dev libglu1-mesa-dev \
     libglew-dev libglfw3-dev coinor-libclp-dev libceres-dev \
     libcgal-dev libcgal-qt5-dev graphviz liblemon-dev \
@@ -75,8 +75,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 # Stage 3: Build Blender (minimal)
 # ------------------------------
 FROM ubuntu:22.04 AS blender_builder
-
-RUN sed -i 's|http://archive.ubuntu.com/ubuntu|http://mirrors.ubuntu.com/mirrors.txt|' /etc/apt/sources.list
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget xz-utils && \
