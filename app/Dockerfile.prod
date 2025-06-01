@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install only build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends \
     cmake build-essential git ca-certificates \
     python3-dev libboost-all-dev libopencv-dev \
     libjpeg-dev libpng-dev libtiff-dev libglu1-mesa-dev \
@@ -93,7 +93,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install only runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends \
     libcgal-qt5-dev libceres2 libboost-system1.74.0 libboost-filesystem1.74.0 \
     libboost-program-options1.74.0 libboost-serialization1.74.0 \
     libopencv-core4.5d libopencv-imgproc4.5d libopencv-imgcodecs4.5d \
