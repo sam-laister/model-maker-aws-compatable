@@ -1,0 +1,216 @@
+# Production Dockerfile for OpenMVG/OpenMVS Go Application
+# Multi-stage build optimized for security, size, and performance
+
+# ------------------------------
+# Stage 1: Build OpenMVG/OpenMVS
+# ------------------------------
+FROM ubuntu:22.04 AS cv_builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
+
+ENV TZ=Europe/Madrid
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tzdata git build-essential cmake pkg-config wget unzip libgtk2.0-dev \
+    curl ca-certificates libcurl4-openssl-dev libssl-dev \
+    libavcodec-dev libavformat-dev libswscale-dev libtbb2 libtbb-dev \
+    libharfbuzz-dev libfreetype6-dev \
+    libjpeg-turbo8-dev libpng-dev libtiff-dev libdc1394-dev nasm && \
+    rm -rf /var/lib/apt/lists/*
+
+ARG OPENCV_VERSION="4.11.0"
+ENV OPENCV_VERSION $OPENCV_VERSION
+
+ARG OPENCV_FILE="https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip"
+ENV OPENCV_FILE $OPENCV_FILE
+
+ARG OPENCV_CONTRIB_FILE="https://github.com/opencv/opencv_contrib/archive/${OPENCV_VERSION}.zip"
+ENV OPENCV_CONTRIB_FILE $OPENCV_CONTRIB_FILE
+
+RUN curl -Lo opencv.zip ${OPENCV_FILE} && \
+    unzip -q opencv.zip && \
+    curl -Lo opencv_contrib.zip ${OPENCV_CONTRIB_FILE} && \
+    unzip -q opencv_contrib.zip && \
+    rm opencv.zip opencv_contrib.zip && \
+    cd opencv-${OPENCV_VERSION} && \
+    mkdir build && cd build && \
+    cmake -D CMAKE_BUILD_TYPE=RELEASE \
+    -D WITH_IPP=OFF \
+    -D WITH_OPENGL=OFF \
+    -D WITH_QT=OFF \
+    -D WITH_FREETYPE=ON \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-${OPENCV_VERSION}/modules \
+    -D OPENCV_ENABLE_NONFREE=ON \
+    -D WITH_JASPER=OFF \
+    -D WITH_TBB=ON \
+    -D BUILD_JPEG=ON \
+    -D WITH_SIMD=ON \
+    -D ENABLE_LIBJPEG_TURBO_SIMD=ON \
+    -D BUILD_DOCS=OFF \
+    -D BUILD_EXAMPLES=OFF \
+    -D BUILD_TESTS=OFF \
+    -D BUILD_PERF_TESTS=ON \
+    -D BUILD_opencv_java=NO \
+    -D BUILD_opencv_python=NO \
+    -D BUILD_opencv_python2=NO \
+    -D BUILD_opencv_python3=NO \
+    -D OPENCV_GENERATE_PKGCONFIG=ON .. && \
+    make -j $(nproc --all) && \
+    make preinstall && make install && ldconfig && \
+    cd / && rm -rf opencv*
+
+
+# Install only build dependencies
+# Seperate for cache issues
+
+# RUN apt-get install -y --fix-missing --no-install-recommends \
+#     cmake build-essential git ca-certificates \
+#     python3-dev libboost-system-dev libboost-filesystem-dev \
+#     libboost-program-options-dev libboost-serialization-dev \
+#     # libopencv-dev \
+#     libpng-dev \
+#     libjpeg-dev libtiff-dev libglu1-mesa-dev \
+#     libglew-dev libglfw3-dev coinor-libclp-dev libceres-dev \
+#     libcgal-dev libcgal-qt5-dev graphviz liblemon-dev \
+#     pkg-config && \
+#     rm -rf /var/lib/apt/lists/*
+
+# Build VCG library
+# RUN git clone --depth=1 https://github.com/cdcseacave/VCG.git /vcglib
+
+# # Build OpenMVG
+# RUN git clone --recursive --depth=1 https://github.com/openMVG/openMVG.git /openMVG && \
+#     mkdir -p /openMVG_build && cd /openMVG_build && \
+#     cmake -DCMAKE_BUILD_TYPE=RELEASE \
+#     -DCMAKE_INSTALL_PREFIX=/usr/local \
+#     /openMVG/src && \
+#     make -j$(nproc) && \
+#     make install
+
+# # Build OpenMVS
+# RUN git clone --branch develop --depth=1 https://github.com/cdcseacave/openMVS.git /openMVS && \
+#     sed -i 's|<CGAL/AABB_traits_3.h>|<CGAL/AABB_tree.h>|g' /openMVS/libs/MVS/SceneReconstruct.cpp && \
+#     sed -i 's|<CGAL/AABB_triangle_primitive_3.h>|<CGAL/AABB_triangle_primitive.h>|g' /openMVS/libs/MVS/SceneReconstruct.cpp && \
+#     mkdir -p /openMVS_build && cd /openMVS_build && \
+#     cmake -DCMAKE_BUILD_TYPE=RELEASE \
+#     -DCMAKE_INSTALL_PREFIX=/usr/local \
+#     -DOpenMVG_DIR=/usr/local/lib/cmake/openmvg \
+#     -DVCG_ROOT=/vcglib \
+#     /openMVS && \
+#     make -j$(nproc) && \
+#     make install
+
+# # ------------------------------
+# # Stage 2: Build Go Application
+# # ------------------------------
+# FROM golang:1.24.3-alpine AS go_builder
+
+# # Install git for Go modules (if needed)
+# RUN apk add --no-cache git ca-certificates
+
+# WORKDIR /app
+
+# # Copy go mod files first for better caching
+# COPY go.mod go.sum ./
+# RUN go mod download
+
+# # Copy source code
+# COPY . .
+
+# # Build the Go application
+# RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+#     -ldflags='-w -s -extldflags "-static"' \
+#     -a -installsuffix cgo \
+#     -o server .
+
+# # ------------------------------
+# # Stage 3: Build Blender (minimal)
+# # ------------------------------
+# FROM ubuntu:22.04 AS blender_builder
+
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     wget xz-utils && \
+#     rm -rf /var/lib/apt/lists/*
+
+# RUN wget -q https://download.blender.org/release/Blender4.4/blender-4.4.0-linux-x64.tar.xz --no-check-certificate && \
+#     mkdir -p /opt/blender && \
+#     tar -xf blender-4.4.0-linux-x64.tar.xz -C /opt/blender --strip-components=1 && \
+#     rm blender-4.4.0-linux-x64.tar.xz
+
+# # ------------------------------
+# # Stage 4: Production Runtime
+# # ------------------------------
+# FROM ubuntu:22.04 AS final
+
+# RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
+
+# # Create non-root user
+# RUN groupadd -r appuser && useradd -r -g appuser -s /bin/false appuser
+
+# ENV DEBIAN_FRONTEND=noninteractive
+# ARG DEBIAN_FRONTEND=noninteractive
+
+# # Install only runtime dependencies
+# # Seperate for cache issues
+# RUN apt-get update 
+# RUN apt-get install -y --fix-missing --no-install-recommends \
+#     libcgal-qt5-dev libceres2 libboost-system1.74.0 libboost-filesystem1.74.0 \
+#     libboost-program-options1.74.0 libboost-serialization1.74.0 \
+#     libopencv-core4.5d libopencv-imgproc4.5d libopencv-imgcodecs4.5d \
+#     libjpeg8 libpng16-16 libtiff5 libglu1-mesa libglew2.2 \
+#     libglfw3 libgomp1 ca-certificates curl wget libboost-all-dev libopencv-dev && \
+#     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# # Copy OpenMVG/OpenMVS binaries and libraries
+# COPY --from=cv_builder /usr/local/bin/ /usr/local/bin/
+# COPY --from=cv_builder /usr/local/lib/ /usr/local/lib/
+
+# # Copy Blender (only essential parts)
+# COPY --from=blender_builder /opt/blender/blender /usr/local/bin/blender
+# COPY --from=blender_builder /opt/blender/4.4/ /opt/blender/4.4/
+
+# # Copy Go application
+# COPY --from=go_builder /app/server /usr/local/bin/server
+
+# WORKDIR /app
+
+# # Copy utilities
+# COPY ./bin /app/bin
+
+# # Update library cache
+# RUN ldconfig
+
+# # Create app directory with proper permissions
+# RUN mkdir -p /app /app/data /app/logs && \
+#     chown -R appuser:appuser /app && \
+#     chown -R appuser:appuser /usr/local/bin 
+
+# # Copy entrypoint script
+# COPY --chown=appuser:appuser entrypoint.sh /app/entrypoint.sh
+# RUN chmod +x /app/entrypoint.sh
+
+# # Set environment variables
+# ENV PATH="/usr/local/bin:/usr/local/bin/OpenMVS:$PATH" \
+#     PORT=3333 \
+#     GIN_MODE=release \
+#     LOG_LEVEL=info \
+#     BLENDER_PATH=/usr/local/bin/blender
+
+# # Switch to non-root user
+# USER appuser
+
+
+# # Health check
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+#     CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# # Expose port
+# EXPOSE 3333
+
+# # Use proper entrypoint
+# ENTRYPOINT ["/app/entrypoint.sh"]
+# CMD ["server"]
