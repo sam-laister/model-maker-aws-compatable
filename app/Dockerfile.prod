@@ -98,6 +98,9 @@ FROM ubuntu:22.04 AS final
 
 RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
 
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/false appuser
 
