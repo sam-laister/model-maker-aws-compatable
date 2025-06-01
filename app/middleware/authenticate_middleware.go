@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Soup666/diss-api/services"
+	"github.com/Soup666/modelmaker/services"
 	"github.com/gin-gonic/gin"
 )
 

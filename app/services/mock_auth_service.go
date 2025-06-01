@@ -2,7 +2,7 @@ package services
 
 import (
 	"firebase.google.com/go/v4/auth"
-	models "github.com/Soup666/diss-api/model"
+	models "github.com/Soup666/modelmaker/model"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -29,4 +29,13 @@ func (m *MockAuthService) Verify(token string) (*models.User, error) {
 		return args.Get(0).(*models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
+}
+
+func (m *MockAuthService) Unverify(user *models.User) error {
+	args := m.Called(user)
+
+	if args.Get(0) != nil {
+		return args.Error(1)
+	}
+	return nil
 }

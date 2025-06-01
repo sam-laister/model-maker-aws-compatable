@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Soup666/diss-api/controller"
-	"github.com/Soup666/diss-api/mocks"
-	models "github.com/Soup666/diss-api/model"
-	utils "github.com/Soup666/diss-api/utils"
+	"github.com/Soup666/modelmaker/controller"
+	"github.com/Soup666/modelmaker/mocks"
+	models "github.com/Soup666/modelmaker/model"
+	utils "github.com/Soup666/modelmaker/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

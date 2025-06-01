@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/Soup666/diss-api/controller"
-	db "github.com/Soup666/diss-api/database"
-	repositories "github.com/Soup666/diss-api/repository"
-	"github.com/Soup666/diss-api/router"
-	"github.com/Soup666/diss-api/services"
+	"github.com/Soup666/modelmaker/controller"
+	db "github.com/Soup666/modelmaker/database"
+	repositories "github.com/Soup666/modelmaker/repository"
+	"github.com/Soup666/modelmaker/router"
+	"github.com/Soup666/modelmaker/services"
 
 	firebase "firebase.google.com/go/v4"
 	"google.golang.org/api/option"
@@ -56,11 +56,14 @@ func main() {
 	collectionsService := services.NewCollectionsService(collectionsRepo)
 	userAnalyticsService := services.NewUserAnalyticsService(userAnalyticsRepo)
 
+	// Initialise Job Queue
+	taskService.StartWorker()
+
 	authController := controller.NewAuthController(authService, userService)
-	taskController := controller.NewTaskController(taskService, appFileService, visionService)
+	taskController := controller.NewTaskController(&taskService, appFileService, visionService)
 	uploadController := controller.NewUploadController()
 	objectController := controller.NewObjectController()
-	visionController := controller.NewVisionController(visionService, taskRepo, taskService)
+	visionController := controller.NewVisionController(visionService, taskRepo, &taskService)
 	reportsController := controller.NewReportsController(reportsService)
 	collectionsController := controller.NewCollectionsController(collectionsService)
 	userAnalyticsController := controller.NewUserAnalyticsController(userAnalyticsService)

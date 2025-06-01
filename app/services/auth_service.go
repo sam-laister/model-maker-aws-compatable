@@ -2,7 +2,7 @@ package services
 
 import (
 	"firebase.google.com/go/v4/auth"
-	"github.com/Soup666/diss-api/model"
+	"github.com/Soup666/modelmaker/model"
 )
 
 type AuthService interface {

@@ -25,5 +25,6 @@ jobs:
           distribution: goreleaser
           version: "~> v2"
           args: release --clean --release-notes=${{runner.temp}}/release_notes.txt
+          workdir: app
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

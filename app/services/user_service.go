@@ -1,6 +1,6 @@
 package services
 
-import models "github.com/Soup666/diss-api/model"
+import models "github.com/Soup666/modelmaker/model"
 
 type UserService interface {
 	GetUserFromFirebaseUID(apiKey string) (*models.User, error)

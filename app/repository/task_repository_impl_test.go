@@ -3,9 +3,9 @@ package repositories_test
 import (
 	"testing"
 
-	database "github.com/Soup666/diss-api/database"
-	"github.com/Soup666/diss-api/model"
-	repositories "github.com/Soup666/diss-api/repository"
+	database "github.com/Soup666/modelmaker/database"
+	"github.com/Soup666/modelmaker/model"
+	repositories "github.com/Soup666/modelmaker/repository"
 	"github.com/stretchr/testify/assert"
 )
 

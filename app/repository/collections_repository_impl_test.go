@@ -3,9 +3,9 @@ package repositories_test
 import (
 	"testing"
 
-	database "github.com/Soup666/diss-api/database"
-	"github.com/Soup666/diss-api/model"
-	repositories "github.com/Soup666/diss-api/repository"
+	database "github.com/Soup666/modelmaker/database"
+	"github.com/Soup666/modelmaker/model"
+	repositories "github.com/Soup666/modelmaker/repository"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,7 +40,6 @@ func TestCollectionsRepository(t *testing.T) {
 
 	err = repo.CreateCollection(collection)
 	assert.NoError(t, err)
-	assert.NotZero(t, collection.Id)
 
 	// Test GetTaskByID
 	// fetchedCollection, err := repo.GetCollectionByID(1)

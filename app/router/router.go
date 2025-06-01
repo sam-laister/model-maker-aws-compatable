@@ -1,9 +1,9 @@
 package router
 
 import (
-	"github.com/Soup666/diss-api/controller"
-	"github.com/Soup666/diss-api/middleware"
-	"github.com/Soup666/diss-api/services"
+	"github.com/Soup666/modelmaker/controller"
+	"github.com/Soup666/modelmaker/middleware"
+	"github.com/Soup666/modelmaker/services"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"

@@ -1,8 +1,12 @@
 package services
 
 import (
-	"github.com/Soup666/diss-api/model"
+	"github.com/Soup666/modelmaker/model"
 )
+
+type TaskJob struct {
+	ID uint
+}
 
 type TaskService interface {
 	CreateTask(task *model.Task) error
@@ -19,4 +23,7 @@ type TaskService interface {
 	FullyLoadTask(task *model.Task) (*model.Task, error)
 	SendMessage(taskID uint, message string, sender string) (*model.ChatMessage, error)
 	AddLog(taskID uint, log string) error
+	EnqueueJob(job TaskJob) bool
+	StartWorker()
+	GetJobQueue() chan TaskJob
 }

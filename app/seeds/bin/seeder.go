@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/Soup666/diss-api/database"
-	"github.com/Soup666/diss-api/model"
-	"github.com/Soup666/diss-api/seeds/seeds"
+	"github.com/Soup666/modelmaker/database"
+	"github.com/Soup666/modelmaker/model"
+	"github.com/Soup666/modelmaker/seeds/seeds"
 	_ "github.com/joho/godotenv/autoload"
 )
 

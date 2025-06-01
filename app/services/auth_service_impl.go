@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"firebase.google.com/go/v4/auth"
-	"github.com/Soup666/diss-api/model"
-	repositories "github.com/Soup666/diss-api/repository"
+	"github.com/Soup666/modelmaker/model"
+	repositories "github.com/Soup666/modelmaker/repository"
 	"gorm.io/gorm"
 )
 

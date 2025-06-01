@@ -6,12 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Soup666/diss-api/services"
+	"github.com/Soup666/modelmaker/services"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 
 	"firebase.google.com/go/v4/auth"
-	models "github.com/Soup666/diss-api/model"
+	models "github.com/Soup666/modelmaker/model"
 )
 
 func TestAuthMiddleware(t *testing.T) {
@@ -102,7 +103,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 		mockAuthService := new(services.MockAuthService)
 		mockAuthService.On("ValidateToken", "valid-token").Return(&auth.Token{UID: "123"}, nil)
-		mockAuthService.On("Verify", "123").Return(&models.User{Id: 1, FirebaseUid: "123", Email: ""}, nil)
+		mockAuthService.On("Verify", "123").Return(&models.User{Model: gorm.Model{ID: 1}, FirebaseUid: "123", Email: ""}, nil)
 
 		middleware := AuthMiddleware(mockAuthService)
 
@@ -124,7 +125,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.JSONEq(t, `{
-            "user": {"CreatedAt":"0001-01-01T00:00:00Z", "DeletedAt":null, "Email":"", "FirebaseUid":"123", "Id":1, "UpdatedAt":"0001-01-01T00:00:00Z"},
+            "user": {"CreatedAt":"0001-01-01T00:00:00Z", "DeletedAt":null, "Email":"", "FirebaseUid":"123", "ID":1, "UpdatedAt":"0001-01-01T00:00:00Z"},
             "token": "123"
         }`, recorder.Body.String())
 	})

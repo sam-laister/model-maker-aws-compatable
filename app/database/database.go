@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Soup666/diss-api/model"
+	"github.com/Soup666/modelmaker/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -77,7 +77,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'taskstatus') THEN
         CREATE TYPE TaskStatus AS ENUM
         (
-            'SUCCESS', 'INPROGRESS', 'FAILED', 'INITIAL'
+            'SUCCESS', 'INPROGRESS', 'FAILED', 'INITIAL', 'QUEUED'
         );
     END IF;
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reporttype') THEN
