@@ -1,11 +1,10 @@
 module github.com/Soup666/modelmaker
 
-go 1.24
-
-toolchain go1.24.2
+go 1.24.3
 
 require (
 	firebase.google.com/go/v4 v4.15.2
+	github.com/2024-dissertation/openmvgo v1.0.5
 	github.com/appleboy/go-fcm v1.2.5
 	github.com/bodgit/sevenzip v1.6.1
 	github.com/gin-gonic/gin v1.10.0

@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/2024-dissertation/openmvgo/pkg/openmvg"
+	"github.com/2024-dissertation/openmvgo/pkg/openmvs"
+	"github.com/2024-dissertation/openmvgo/pkg/utils"
 	models "github.com/Soup666/modelmaker/model"
 	repositories "github.com/Soup666/modelmaker/repository"
 	"gorm.io/gorm"
@@ -154,303 +157,303 @@ func (s *TaskServiceImpl) FailTask(task *models.Task, message string) error {
 	return nil
 }
 
-func (s *TaskServiceImpl) RunPhotogrammetryProcess(task *models.Task) error {
+// func (s *TaskServiceImpl) RunPhotogrammetryProcess(task *models.Task) error {
 
-	if task.Status == models.INPROGRESS {
-		log.Printf("Task %d is already in progress\n", task.ID)
-		return nil
-	}
+// 	if task.Status == models.INPROGRESS {
+// 		log.Printf("Task %d is already in progress\n", task.ID)
+// 		return nil
+// 	}
 
-	startTime := time.Now()
+// 	startTime := time.Now()
 
-	TASK_COUNT := 7.0
-	CURRENT_TASK := 0.0
+// 	TASK_COUNT := 7.0
+// 	CURRENT_TASK := 0.0
 
-	inputPath := filepath.Join("uploads", fmt.Sprintf("%d", task.ID))
-	outputPath := filepath.Join("objects", fmt.Sprintf("%d", task.ID))
-	mvsPath := filepath.Join(outputPath, "mvs")
+// 	inputPath := filepath.Join("uploads", fmt.Sprintf("%d", task.ID))
+// 	outputPath := filepath.Join("objects", fmt.Sprintf("%d", task.ID))
+// 	mvsPath := filepath.Join(outputPath, "mvs")
 
-	task.Status = models.INPROGRESS
-	if err := s.UpdateTask(task); err != nil {
-		log.Printf("Failed to update task status to INPROGRESS: %v\n", err)
-		return err
-	}
+// 	task.Status = models.INPROGRESS
+// 	if err := s.UpdateTask(task); err != nil {
+// 		log.Printf("Failed to update task status to INPROGRESS: %v\n", err)
+// 		return err
+// 	}
 
-	// Clear the build directory
-	if err := os.RemoveAll(outputPath); err != nil {
-		s.FailTask(task, fmt.Sprintf("Failed to clear directory %s: %v", outputPath, err))
-		return err
-	}
+// 	// Clear the build directory
+// 	if err := os.RemoveAll(outputPath); err != nil {
+// 		s.FailTask(task, fmt.Sprintf("Failed to clear directory %s: %v", outputPath, err))
+// 		return err
+// 	}
 
-	if err := os.MkdirAll(outputPath, os.ModePerm); err != nil {
-		s.FailTask(task, fmt.Sprintf("Failed to create directory %s: %v", outputPath, err))
-		return err
-	}
+// 	if err := os.MkdirAll(outputPath, os.ModePerm); err != nil {
+// 		s.FailTask(task, fmt.Sprintf("Failed to create directory %s: %v", outputPath, err))
+// 		return err
+// 	}
 
-	if err := os.MkdirAll(mvsPath, os.ModePerm); err != nil {
-		s.FailTask(task, fmt.Sprintf("Failed to create directory %s: %v", mvsPath, err))
-		return err
-	}
+// 	if err := os.MkdirAll(mvsPath, os.ModePerm); err != nil {
+// 		s.FailTask(task, fmt.Sprintf("Failed to create directory %s: %v", mvsPath, err))
+// 		return err
+// 	}
 
-	CURRENT_TASK = CURRENT_TASK + 1.0
+// 	CURRENT_TASK = CURRENT_TASK + 1.0
 
-	// 1
-	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
-	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
-		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
-		return err
-	}
+// 	// 1
+// 	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
+// 	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
+// 		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
+// 		return err
+// 	}
 
-	log.Println("# 1 ./bin/SfM_SequentialPipeline.py", inputPath, outputPath, "--opensfm-processes", "8")
-	cmd := exec.Command("./bin/SfM_SequentialPipeline.py", inputPath, outputPath, "--opensfm-processes", "8")
+// 	log.Println("# 1 ./bin/SfM_SequentialPipeline.py", inputPath, outputPath, "--opensfm-processes", "8")
+// 	cmd := exec.Command("./bin/SfM_SequentialPipeline.py", inputPath, outputPath, "--opensfm-processes", "8")
 
-	var stdoutBuffer saveOutput
-	cmd.Stdout = &stdoutBuffer
-	cmd.Stderr = &stdoutBuffer
-	err := cmd.Run()
+// 	var stdoutBuffer saveOutput
+// 	cmd.Stdout = &stdoutBuffer
+// 	cmd.Stderr = &stdoutBuffer
+// 	err := cmd.Run()
 
-	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
-		log.Printf("Failed to update meta: log: %v\n", err)
-		return err
-	}
+// 	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
+// 		log.Printf("Failed to update meta: log: %v\n", err)
+// 		return err
+// 	}
 
-	if err != nil {
-		s.FailTask(task, fmt.Sprintf("SfM_SequentialPipeline failed: %s", err))
-		return err
-	}
+// 	if err != nil {
+// 		s.FailTask(task, fmt.Sprintf("SfM_SequentialPipeline failed: %s", err))
+// 		return err
+// 	}
 
-	// 2
-	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
-	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
-		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
-		return err
-	}
-	CURRENT_TASK = CURRENT_TASK + 1.0
+// 	// 2
+// 	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
+// 	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
+// 		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
+// 		return err
+// 	}
+// 	CURRENT_TASK = CURRENT_TASK + 1.0
 
-	s.notificationService.SendMessage(&models.Notification{
-		UserID:  task.UserId,
-		Message: task.Title + " - Processing started",
-		Title:   task.Title,
-	})
+// 	s.notificationService.SendMessage(&models.Notification{
+// 		UserID:  task.UserId,
+// 		Message: task.Title + " - Processing started",
+// 		Title:   task.Title,
+// 	})
 
-	log.Println("# 2 openMVG_main_openMVG2openMVS", "-i", filepath.Join(outputPath, "reconstruction_sequential/sfm_data.bin"), "-o", filepath.Join(mvsPath, "scene.mvs"), inputPath, outputPath, "-d", mvsPath)
-	cmd = exec.Command("openMVG_main_openMVG2openMVS", "-i", filepath.Join(outputPath, "reconstruction_sequential/sfm_data.bin"), "-o", filepath.Join(mvsPath, "scene.mvs"), inputPath, outputPath, "-d", mvsPath)
+// 	log.Println("# 2 openMVG_main_openMVG2openMVS", "-i", filepath.Join(outputPath, "reconstruction_sequential/sfm_data.bin"), "-o", filepath.Join(mvsPath, "scene.mvs"), inputPath, outputPath, "-d", mvsPath)
+// 	cmd = exec.Command("openMVG_main_openMVG2openMVS", "-i", filepath.Join(outputPath, "reconstruction_sequential/sfm_data.bin"), "-o", filepath.Join(mvsPath, "scene.mvs"), inputPath, outputPath, "-d", mvsPath)
 
-	cmd.Stdout = &stdoutBuffer
-	cmd.Stderr = &stdoutBuffer
-	err = cmd.Run()
+// 	cmd.Stdout = &stdoutBuffer
+// 	cmd.Stderr = &stdoutBuffer
+// 	err = cmd.Run()
 
-	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
-		log.Printf("Failed to update meta: log: %v\n", err)
-		return err
-	}
+// 	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
+// 		log.Printf("Failed to update meta: log: %v\n", err)
+// 		return err
+// 	}
 
-	if err != nil {
-		log.Println()
-		s.FailTask(task, fmt.Sprintf("openMVG_main_openMVG2openMVS failed: %s", err))
-		return err
-	}
+// 	if err != nil {
+// 		log.Println()
+// 		s.FailTask(task, fmt.Sprintf("openMVG_main_openMVG2openMVS failed: %s", err))
+// 		return err
+// 	}
 
-	// 3
-	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
-	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
-		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
-		return err
-	}
-	CURRENT_TASK = CURRENT_TASK + 1.0
+// 	// 3
+// 	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
+// 	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
+// 		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
+// 		return err
+// 	}
+// 	CURRENT_TASK = CURRENT_TASK + 1.0
 
-	s.notificationService.SendMessage(&models.Notification{
-		UserID:  task.UserId,
-		Message: "Step 2/7 started",
-		Title:   task.Title,
-	})
+// 	s.notificationService.SendMessage(&models.Notification{
+// 		UserID:  task.UserId,
+// 		Message: "Step 2/7 started",
+// 		Title:   task.Title,
+// 	})
 
-	log.Println("# 3 DensifyPointCloud", "scene.mvs", "-o", "scene_dense.mvs", "-w", mvsPath, "--max-threads", "1")
-	cmd = exec.Command("DensifyPointCloud", "scene.mvs", "-o", "scene_dense.mvs", "-w", mvsPath, "--max-threads", "1")
+// 	log.Println("# 3 DensifyPointCloud", "scene.mvs", "-o", "scene_dense.mvs", "-w", mvsPath, "--max-threads", "1")
+// 	cmd = exec.Command("DensifyPointCloud", "scene.mvs", "-o", "scene_dense.mvs", "-w", mvsPath, "--max-threads", "1")
 
-	cmd.Stdout = &stdoutBuffer
-	cmd.Stderr = &stdoutBuffer
-	err = cmd.Run()
+// 	cmd.Stdout = &stdoutBuffer
+// 	cmd.Stderr = &stdoutBuffer
+// 	err = cmd.Run()
 
-	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
-		log.Printf("Failed to update meta: log: %v\n", err)
-		return err
-	}
+// 	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
+// 		log.Printf("Failed to update meta: log: %v\n", err)
+// 		return err
+// 	}
 
-	if err != nil {
-		s.FailTask(task, fmt.Sprintf("DensifyPointCloud failed: %s", err))
-		return err
-	}
+// 	if err != nil {
+// 		s.FailTask(task, fmt.Sprintf("DensifyPointCloud failed: %s", err))
+// 		return err
+// 	}
 
-	// 4
-	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
-	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
-		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
-		return err
-	}
-	CURRENT_TASK = CURRENT_TASK + 1.0
+// 	// 4
+// 	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
+// 	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
+// 		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
+// 		return err
+// 	}
+// 	CURRENT_TASK = CURRENT_TASK + 1.0
 
-	s.notificationService.SendMessage(&models.Notification{
-		UserID:  task.UserId,
-		Message: "Step 3/7 started",
-		Title:   task.Title,
-	})
+// 	s.notificationService.SendMessage(&models.Notification{
+// 		UserID:  task.UserId,
+// 		Message: "Step 3/7 started",
+// 		Title:   task.Title,
+// 	})
 
-	log.Println("# 4 ReconstructMesh", "scene_dense.mvs", "-o", "scene_mesh.ply", "-w", mvsPath)
-	cmd = exec.Command("ReconstructMesh", "scene_dense.mvs", "-o", "scene_mesh.ply", "-w", mvsPath)
+// 	log.Println("# 4 ReconstructMesh", "scene_dense.mvs", "-o", "scene_mesh.ply", "-w", mvsPath)
+// 	cmd = exec.Command("ReconstructMesh", "scene_dense.mvs", "-o", "scene_mesh.ply", "-w", mvsPath)
 
-	cmd.Stdout = &stdoutBuffer
-	cmd.Stderr = &stdoutBuffer
-	err = cmd.Run()
+// 	cmd.Stdout = &stdoutBuffer
+// 	cmd.Stderr = &stdoutBuffer
+// 	err = cmd.Run()
 
-	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
-		log.Printf("Failed to update meta: log: %v\n", err)
-		return err
-	}
+// 	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
+// 		log.Printf("Failed to update meta: log: %v\n", err)
+// 		return err
+// 	}
 
-	if err != nil {
-		s.FailTask(task, fmt.Sprintf("ReconstructMesh failed: %v", err))
-		return err
-	}
+// 	if err != nil {
+// 		s.FailTask(task, fmt.Sprintf("ReconstructMesh failed: %v", err))
+// 		return err
+// 	}
 
-	// 5
-	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
-	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
-		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
-		return err
-	}
-	if err := s.AddLog(task.ID, "ReconstructMesh started"); err != nil {
-		log.Printf("Failed to add log: %v\n", err)
-	}
-	CURRENT_TASK = CURRENT_TASK + 1.0
+// 	// 5
+// 	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
+// 	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
+// 		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
+// 		return err
+// 	}
+// 	if err := s.AddLog(task.ID, "ReconstructMesh started"); err != nil {
+// 		log.Printf("Failed to add log: %v\n", err)
+// 	}
+// 	CURRENT_TASK = CURRENT_TASK + 1.0
 
-	s.notificationService.SendMessage(&models.Notification{
-		UserID:  task.UserId,
-		Message: "Step 4/7 started",
-		Title:   task.Title,
-	})
+// 	s.notificationService.SendMessage(&models.Notification{
+// 		UserID:  task.UserId,
+// 		Message: "Step 4/7 started",
+// 		Title:   task.Title,
+// 	})
 
-	log.Println("# 5 RefineMesh", "scene.mvs", "-m", "scene_mesh.ply", "-o", "scene_dense_mesh_refine.mvs", "-w", mvsPath, "--scales", "1", "--max-face-area", "16", "--max-threads", "1")
-	cmd = exec.Command("RefineMesh", "scene.mvs", "-m", "scene_mesh.ply", "-o", "scene_dense_mesh_refine.mvs", "-w", mvsPath, "--scales", "1", "--max-face-area", "16", "--max-threads", "1")
+// 	log.Println("# 5 RefineMesh", "scene.mvs", "-m", "scene_mesh.ply", "-o", "scene_dense_mesh_refine.mvs", "-w", mvsPath, "--scales", "1", "--max-face-area", "16", "--max-threads", "1")
+// 	cmd = exec.Command("RefineMesh", "scene.mvs", "-m", "scene_mesh.ply", "-o", "scene_dense_mesh_refine.mvs", "-w", mvsPath, "--scales", "1", "--max-face-area", "16", "--max-threads", "1")
 
-	cmd.Stdout = &stdoutBuffer
-	cmd.Stderr = &stdoutBuffer
-	err = cmd.Run()
+// 	cmd.Stdout = &stdoutBuffer
+// 	cmd.Stderr = &stdoutBuffer
+// 	err = cmd.Run()
 
-	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
-		log.Printf("Failed to update meta: log: %v\n", err)
-		return err
-	}
+// 	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
+// 		log.Printf("Failed to update meta: log: %v\n", err)
+// 		return err
+// 	}
 
-	if err != nil {
-		s.FailTask(task, fmt.Sprintf("RefineMesh failed: %v", err))
-		return err
-	}
+// 	if err != nil {
+// 		s.FailTask(task, fmt.Sprintf("RefineMesh failed: %v", err))
+// 		return err
+// 	}
 
-	// 6
-	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
-	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
-		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
-		return err
-	}
+// 	// 6
+// 	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
+// 	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
+// 		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
+// 		return err
+// 	}
 
-	if err := s.AddLog(task.ID, "TextureMesh started"); err != nil {
-		log.Printf("Failed to add log: %v\n", err)
-	}
-	CURRENT_TASK = CURRENT_TASK + 1.0
+// 	if err := s.AddLog(task.ID, "TextureMesh started"); err != nil {
+// 		log.Printf("Failed to add log: %v\n", err)
+// 	}
+// 	CURRENT_TASK = CURRENT_TASK + 1.0
 
-	s.notificationService.SendMessage(&models.Notification{
-		UserID:  task.UserId,
-		Message: "Step 5/7 started",
-		Title:   task.Title,
-	})
+// 	s.notificationService.SendMessage(&models.Notification{
+// 		UserID:  task.UserId,
+// 		Message: "Step 5/7 started",
+// 		Title:   task.Title,
+// 	})
 
-	log.Println("# 6 TextureMesh", "scene_dense.mvs", "-m", "scene_dense_mesh_refine.ply", "-o", "scene_dense_mesh_refine_texture.mvs", "-w", mvsPath, "--export-type", "obj")
-	cmd = exec.Command("TextureMesh", "scene_dense.mvs", "-m", "scene_dense_mesh_refine.ply", "-o", "scene_dense_mesh_refine_texture.mvs", "-w", mvsPath, "--export-type", "obj")
+// 	log.Println("# 6 TextureMesh", "scene_dense.mvs", "-m", "scene_dense_mesh_refine.ply", "-o", "scene_dense_mesh_refine_texture.mvs", "-w", mvsPath, "--export-type", "obj")
+// 	cmd = exec.Command("TextureMesh", "scene_dense.mvs", "-m", "scene_dense_mesh_refine.ply", "-o", "scene_dense_mesh_refine_texture.mvs", "-w", mvsPath, "--export-type", "obj")
 
-	cmd.Stdout = &stdoutBuffer
-	cmd.Stderr = &stdoutBuffer
-	err = cmd.Run()
+// 	cmd.Stdout = &stdoutBuffer
+// 	cmd.Stderr = &stdoutBuffer
+// 	err = cmd.Run()
 
-	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
-		log.Printf("Failed to update meta: log: %v\n", err)
-		return err
-	}
+// 	if err := s.UpdateMeta(task, "log", stdoutBuffer.savedOutput); err != nil {
+// 		log.Printf("Failed to update meta: log: %v\n", err)
+// 		return err
+// 	}
 
-	if err != nil {
-		s.FailTask(task, fmt.Sprintf("TextureMesh failed: %v", err))
-		return err
-	}
+// 	if err != nil {
+// 		s.FailTask(task, fmt.Sprintf("TextureMesh failed: %v", err))
+// 		return err
+// 	}
 
-	// 7
+// 	// 7
 
-	CURRENT_TASK = CURRENT_TASK + 1.0
+// 	CURRENT_TASK = CURRENT_TASK + 1.0
 
-	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
-	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
-		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
-		return err
-	}
+// 	log.Println("Updating meta for task:", task.ID, " - ", CURRENT_TASK, "/", TASK_COUNT)
+// 	if err := s.UpdateMeta(task, "opensfm-process", (CURRENT_TASK/TASK_COUNT)*100.0); err != nil {
+// 		log.Printf("Failed to update meta: %f: %v\n", CURRENT_TASK, err)
+// 		return err
+// 	}
 
-	if err := s.AddLog(task.ID, "MeshConversion started"); err != nil {
-		log.Printf("Failed to add log: %v\n", err)
-	}
+// 	if err := s.AddLog(task.ID, "MeshConversion started"); err != nil {
+// 		log.Printf("Failed to add log: %v\n", err)
+// 	}
 
-	s.notificationService.SendMessage(&models.Notification{
-		UserID:  task.UserId,
-		Message: "Step 6/7 started",
-		Title:   task.Title,
-	})
+// 	s.notificationService.SendMessage(&models.Notification{
+// 		UserID:  task.UserId,
+// 		Message: "Step 6/7 started",
+// 		Title:   task.Title,
+// 	})
 
-	fileName := filepath.Join(mvsPath, "final_model")
-	fmt.Println("blender", "-b", "-P", "./bin/convert_obj_to_glb.py", "--", filepath.Join(mvsPath, "scene_dense_mesh_refine_texture.obj"), fileName)
-	cmd = exec.Command("blender", "-b", "-P", "./bin/convert_obj_to_glb.py", "--", filepath.Join(mvsPath, "scene_dense_mesh_refine_texture.obj"), fileName)
+// 	fileName := filepath.Join(mvsPath, "final_model")
+// 	fmt.Println("blender", "-b", "-P", "./bin/convert_obj_to_glb.py", "--", filepath.Join(mvsPath, "scene_dense_mesh_refine_texture.obj"), fileName)
+// 	cmd = exec.Command("blender", "-b", "-P", "./bin/convert_obj_to_glb.py", "--", filepath.Join(mvsPath, "scene_dense_mesh_refine_texture.obj"), fileName)
 
-	cmd.Stdout = &stdoutBuffer
-	cmd.Stderr = &stdoutBuffer
-	err = cmd.Run()
+// 	cmd.Stdout = &stdoutBuffer
+// 	cmd.Stderr = &stdoutBuffer
+// 	err = cmd.Run()
 
-	if err != nil {
-		s.FailTask(task, fmt.Sprintf("MeshConversion failed: %v", err))
-		return err
-	}
+// 	if err != nil {
+// 		s.FailTask(task, fmt.Sprintf("MeshConversion failed: %v", err))
+// 		return err
+// 	}
 
-	if err := s.UpdateMeta(task, "log", stdoutBuffer); err != nil {
-		log.Printf("Failed to update meta: log: %v\n", err)
-		return err
-	}
+// 	if err := s.UpdateMeta(task, "log", stdoutBuffer); err != nil {
+// 		log.Printf("Failed to update meta: log: %v\n", err)
+// 		return err
+// 	}
 
-	mesh, err := s.appFileService.Save(&models.AppFile{
-		Url:      fileName + ".glb",
-		Filename: "final_model.glb",
-		TaskId:   task.ID,
-		FileType: "mesh",
-	})
+// 	mesh, err := s.appFileService.Save(&models.AppFile{
+// 		Url:      fileName + ".glb",
+// 		Filename: "final_model.glb",
+// 		TaskId:   task.ID,
+// 		FileType: "mesh",
+// 	})
 
-	if err != nil {
-		s.FailTask(task, fmt.Sprintf("Failed to Save mesh: %v", err))
-		return err
-	}
+// 	if err != nil {
+// 		s.FailTask(task, fmt.Sprintf("Failed to Save mesh: %v", err))
+// 		return err
+// 	}
 
-	task.Mesh = mesh
-	task.Completed = true
-	task.Status = models.SUCCESS
+// 	task.Mesh = mesh
+// 	task.Completed = true
+// 	task.Status = models.SUCCESS
 
-	if err := s.UpdateTask(task); err != nil {
-		s.FailTask(task, fmt.Sprintf("Failed to update task: %v", err))
-		return err
-	}
+// 	if err := s.UpdateTask(task); err != nil {
+// 		s.FailTask(task, fmt.Sprintf("Failed to update task: %v", err))
+// 		return err
+// 	}
 
-	s.notificationService.SendMessage(&models.Notification{
-		UserID:  task.UserId,
-		Message: "Step Scan finished",
-		Title:   task.Title,
-	})
+// 	s.notificationService.SendMessage(&models.Notification{
+// 		UserID:  task.UserId,
+// 		Message: "Step Scan finished",
+// 		Title:   task.Title,
+// 	})
 
-	log.Println("Task updated successfully.")
-	log.Printf("Processing completed in %s\n", time.Since(startTime))
-	return nil
-}
+// 	log.Println("Task updated successfully.")
+// 	log.Printf("Processing completed in %s\n", time.Since(startTime))
+// 	return nil
+// }
 
 func (s *TaskServiceImpl) GetTaskFiles(taskID uint, fileType string) ([]models.AppFile, error) {
 	files, err := s.appFileService.GetTaskFiles(taskID, fileType)
@@ -526,13 +529,103 @@ func (s *TaskServiceImpl) EnqueueJob(job TaskJob) bool {
 func (s *TaskServiceImpl) StartWorker() {
 	go func() {
 		for job := range s.jobQueue {
-			fmt.Printf("Processing job: %+v\n", job)
+			go func() {
+				fmt.Printf("Processing job: %+v\n", job)
 
-			task, err := s.taskRepo.GetTaskByID(job.ID)
-			if err != nil {
-				continue
-			}
-			s.RunPhotogrammetryProcess(task)
+				task, err := s.taskRepo.GetTaskByID(job.ID)
+				if err != nil {
+					return
+				}
+
+				// Setup Utils
+				utils := utils.NewUtils()
+
+				timestamp := time.Now().Unix()
+
+				// Middle directory creation
+				buildDir, err := os.MkdirTemp("", fmt.Sprintf("%dbuild", timestamp))
+				utils.Check(err)
+				defer os.RemoveAll(buildDir)
+
+				inputDir := filepath.Join("uploads", fmt.Sprintf("%d", task.ID))
+				outputDir := filepath.Join("objects", fmt.Sprintf("%d", task.ID))
+				cameraDBFile := filepath.Join("bin", "sensor_width_camera_database.txt")
+
+				// Configure openmvg service
+				openmvgService := openmvg.NewOpenMVGService(
+					openmvg.NewOpenMVGConfig(
+						inputDir,
+						buildDir,
+						&cameraDBFile,
+					),
+					utils,
+				)
+
+				// Configure openmvs service
+				openmvsService := openmvs.NewOpenMVSService(
+					openmvs.NewOpenMVSConfig(
+						outputDir,
+						buildDir,
+						0,
+					),
+					utils,
+				)
+
+				// Populate and Run Pipelines
+				openmvgService.PopulateTmpDir()
+				defer os.RemoveAll(openmvgService.Config.MatchesDir)
+				defer os.RemoveAll(openmvgService.Config.ReconstructionDir)
+
+				openmvgService.SfMSequentialPipeline()
+				openmvsService.RunPipeline()
+
+				fileName := filepath.Join(outputDir, "final.obj")
+				convertedFileName := filepath.Join(outputDir, "final.glb")
+				fmt.Println("blender", "-b", "-P", "./bin/convert_obj_to_glb.py", "--", fileName, convertedFileName)
+				cmd := exec.Command("blender", "-b", "-P", "./bin/convert_obj_to_glb.py", "--", fileName, convertedFileName)
+
+				err = cmd.Run()
+
+				if err != nil {
+					s.FailTask(task, fmt.Sprintf("MeshConversion failed: %v", err))
+					return
+				}
+
+				if err := s.UpdateMeta(task, "log", "MeshConversion started"); err != nil {
+					log.Printf("Failed to update meta: log: %v\n", err)
+					return
+				}
+
+				mesh, err := s.appFileService.Save(&models.AppFile{
+					Url:      fileName + ".glb",
+					Filename: "final.glb",
+					TaskId:   task.ID,
+					FileType: "mesh",
+				})
+
+				if err != nil {
+					s.FailTask(task, fmt.Sprintf("Failed to Save mesh: %v", err))
+					return
+				}
+
+				task.Mesh = mesh
+				task.Completed = true
+				task.Status = models.SUCCESS
+
+				if err := s.UpdateTask(task); err != nil {
+					s.FailTask(task, fmt.Sprintf("Failed to update task: %v", err))
+					return
+				}
+
+				s.notificationService.SendMessage(&models.Notification{
+					UserID:  task.UserId,
+					Message: "Scan finished",
+					Title:   task.Title,
+				})
+
+				// Complete
+				fmt.Println("OpenMVGO pipeline completed successfully!")
+			}()
 		}
 	}()
 }
