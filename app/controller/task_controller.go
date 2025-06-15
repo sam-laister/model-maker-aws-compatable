@@ -476,27 +476,32 @@ func (c *TaskController) WebhookTask(ctx *gin.Context) {
 		return
 	}
 
-	// if payload.Detail.DesiredStatus == "STOPPED" {
-	// 	task.Status = "FAILED"
-	// } else {
-	// 	task.Status = "SUCCESS"
-	// }
+	switch payload.Detail.DesiredStatus {
+	case "STOPPED":
+		task.Status = models.FAILED
+		task.Mesh = nil
+	case "Essential container in task exited":
+		task.Status = models.SUCCESS
 
-	task.Status = "SUCCESS"
+		// Handled this way since the frontend app checks if mesh is nil, not the status. And apple review process takes too long.
+		mesh, err := c.AppFileService.Save(&models.AppFile{
+			Url:      "", // Not used
+			Filename: "final.glb",
+			TaskId:   task.ID,
+			FileType: "mesh",
+		})
 
-	mesh, err := c.AppFileService.Save(&models.AppFile{
-		Url:      "", // Not used
-		Filename: "final.glb",
-		TaskId:   task.ID,
-		FileType: "mesh",
-	})
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save mesh"})
+			return
+		}
 
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save mesh"})
-		return
+		task.Mesh = mesh
+	case "RUNNING":
+		task.Status = models.INPROGRESS
+	default:
+		task.Status = models.INPROGRESS
 	}
-
-	task.Mesh = mesh
 
 	if err := c.TaskService.SaveTask(task); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update task"})
