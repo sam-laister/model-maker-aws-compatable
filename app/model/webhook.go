@@ -11,5 +11,6 @@ type WebhookPayload struct {
 			} `json:"containerOverrides"`
 		} `json:"overrides"`
 		DesiredStatus string `json:"desiredStatus"`
+		StoppedReason string `json:"stoppedReason"`
 	} `json:"detail"`
 }

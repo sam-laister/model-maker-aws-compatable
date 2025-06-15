@@ -476,11 +476,8 @@ func (c *TaskController) WebhookTask(ctx *gin.Context) {
 		return
 	}
 
-	switch payload.Detail.DesiredStatus {
-	case "STOPPED":
-		task.Status = models.FAILED
-		task.Mesh = nil
-	case "Essential container in task exited":
+	if payload.Detail.DesiredStatus == "STOPPED" && payload.Detail.StoppedReason == "Essential container in task exited" {
+		// Success
 		task.Status = models.SUCCESS
 
 		// Handled this way since the frontend app checks if mesh is nil, not the status. And apple review process takes too long.
@@ -497,10 +494,12 @@ func (c *TaskController) WebhookTask(ctx *gin.Context) {
 		}
 
 		task.Mesh = mesh
-	case "RUNNING":
+	} else if payload.Detail.DesiredStatus == "RUNNING" {
 		task.Status = models.INPROGRESS
-	default:
-		task.Status = models.INPROGRESS
+	} else if payload.Detail.DesiredStatus == "STOPPED" {
+		// Assume failed
+		task.Status = models.FAILED
+		task.Mesh = nil
 	}
 
 	if err := c.TaskService.SaveTask(task); err != nil {
