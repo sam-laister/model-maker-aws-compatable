@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Soup666/modelmaker/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -70,33 +69,35 @@ func ResetTestDB() {
 }
 
 func MigrateScheme() error {
-	createEnumCommand := `
-	--create types
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'taskstatus') THEN
-        CREATE TYPE TaskStatus AS ENUM
-        (
-            'SUCCESS', 'INPROGRESS', 'FAILED', 'INITIAL', 'QUEUED'
-        );
-    END IF;
-	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reporttype') THEN
-        CREATE TYPE ReportType AS ENUM
-        (
-            'BUG', 'FEEDBACK'
-        );
-    END IF;
-END$$;
-`
-
-	DB.Exec(createEnumCommand)
-
-	err := DB.AutoMigrate(&model.User{}, &model.Task{}, &model.Report{}, &model.Collection{}, &model.ChatMessage{}, &model.AppFile{}, &model.TaskLog{})
-	if err != nil {
-		log.Fatalf("Failed to migrate test DB: %v", err)
-		return err
-	}
-
-	log.Println("Database migrated successfully")
+	// Removed, now handled by goose
 	return nil
+
+	// 	createEnumCommand := `
+	// 	--create types
+	// DO $$
+	// BEGIN
+	//     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'taskstatus') THEN
+	//         CREATE TYPE TaskStatus AS ENUM
+	//         (
+	//             'SUCCESS', 'INPROGRESS', 'FAILED', 'INITIAL', 'QUEUED'
+	//         );
+	//     END IF;
+	// 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reporttype') THEN
+	//         CREATE TYPE ReportType AS ENUM
+	//         (
+	//             'BUG', 'FEEDBACK'
+	//         );
+	//     END IF;
+	// END$$;
+	//`
+
+	// DB.Exec(createEnumCommand)
+
+	// err := DB.AutoMigrate(&model.User{}, &model.Task{}, &model.Report{}, &model.Collection{}, &model.ChatMessage{}, &model.AppFile{}, &model.TaskLog{})
+	// if err != nil {
+	// 	log.Fatalf("Failed to migrate test DB: %v", err)
+	// 	return err
+	// }
+
+	// log.Println("Database migrated successfully")
 }

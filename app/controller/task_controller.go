@@ -111,6 +111,20 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 func (c *TaskController) CreateTask(ctx *gin.Context) {
 	user := ctx.MustGet("user").(*model.User)
 
+	// Check task limits based on subscription tier
+	tasks, err := c.TaskService.GetUnarchivedTasks(user.Model.ID)
+	if err != nil {
+		log.Printf("Error getting tasks: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check task limits"})
+		return
+	}
+
+	// Free tier has a limit of 10 tasks
+	if user.SubscriptionTier == "free" && len(tasks) >= 10 {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Free tier limit reached. Please upgrade your subscription to create more tasks."})
+		return
+	}
+
 	task := &model.Task{
 		Title:       "",
 		Description: "", // Overriden by ai-description
@@ -119,7 +133,7 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		Status:      "INITIAL",
 	}
 
-	err := c.TaskService.CreateTask(task)
+	err = c.TaskService.CreateTask(task)
 
 	if err != nil {
 		log.Printf("Error creating task: %v", err)
@@ -460,9 +474,6 @@ func (c *TaskController) WebhookTask(ctx *gin.Context) {
 			}
 		}
 	}
-
-	fmt.Println("BUCKET_TASK_ID:", bucketTaskID)
-	fmt.Println(string(body))
 
 	taskId, err := strconv.Atoi(bucketTaskID)
 	if err != nil {
