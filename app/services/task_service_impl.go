@@ -233,6 +233,11 @@ func (s *TaskServiceImpl) processTask(job TaskJob) {
 	// Create ECS client
 	client := ecs.NewFromConfig(cfg)
 
+	bucketInput := fmt.Sprintf("uploads/%d/", job.ID)
+	if os.Getenv("APP_ENV") == "dev" {
+		bucketInput = "development/" + bucketInput
+	}
+
 	// Build input for RunTask
 	input := &ecs.RunTaskInput{
 		Cluster:        aws.String(os.Getenv("AWS_ECS_CLUSTER")),
@@ -255,7 +260,7 @@ func (s *TaskServiceImpl) processTask(job TaskJob) {
 						{Name: aws.String("KATAPULT_ENDPOINT"), Value: aws.String(os.Getenv("KATAPULT_ENDPOINT"))},
 						{Name: aws.String("KATAPULT_REGION"), Value: aws.String(os.Getenv("KATAPULT_REGION"))},
 						{Name: aws.String("KATAPULT_SECRET_KEY"), Value: aws.String(os.Getenv("KATAPULT_SECRET_KEY"))},
-						{Name: aws.String("BUCKET_INPUT"), Value: aws.String(fmt.Sprintf("development/uploads/%d/", job.ID))},
+						{Name: aws.String("BUCKET_INPUT"), Value: aws.String(bucketInput)},
 						{Name: aws.String("BUCKET_TASK_ID"), Value: aws.String(fmt.Sprintf("%d", job.ID))},
 					},
 				},

@@ -194,6 +194,7 @@ func (c *TaskController) UploadFileToTask(ctx *gin.Context) {
 			// Upload to object storage
 			url, err := c.StorageService.UploadFile(file, uint(taskId), "upload")
 			if err != nil {
+				fmt.Println("Error uploading file", err)
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to save file %s", file.Filename)})
 				hasError = true
 				return
