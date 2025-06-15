@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/Soup666/modelmaker/database"
 	"github.com/Soup666/modelmaker/model"
+	models "github.com/Soup666/modelmaker/model"
 	services "github.com/Soup666/modelmaker/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -311,7 +313,7 @@ func (c *TaskController) StartProcess(ctx *gin.Context) {
 
 	// Add job to queue
 	if !c.TaskService.EnqueueJob(
-		services.TaskJob{ID: task.ID},
+		services.TaskJob{TaskID: task.ID, UserID: ctx.MustGet("user").(*models.User).Model.ID},
 	) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Task queue is full"})
 		return
@@ -435,4 +437,69 @@ func (c *TaskController) UnarchiveTask(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": task})
+}
+
+func (c *TaskController) WebhookTask(ctx *gin.Context) {
+	body, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var payload model.WebhookPayload
+	if err := json.Unmarshal(body, &payload); err != nil {
+		panic(err)
+	}
+
+	var bucketTaskID string
+	for _, container := range payload.Detail.Overrides.ContainerOverrides {
+		for _, env := range container.Environment {
+			if env.Name == "BUCKET_TASK_ID" {
+				bucketTaskID = env.Value
+				break
+			}
+		}
+	}
+
+	fmt.Println("BUCKET_TASK_ID:", bucketTaskID)
+	fmt.Println(string(body))
+
+	taskId, err := strconv.Atoi(bucketTaskID)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID"})
+		return
+	}
+
+	task, err := c.TaskService.GetTask(uint(taskId))
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		return
+	}
+
+	if payload.Detail.DesiredStatus == "STOPPED" {
+		task.Status = "SUCCESS"
+	} else {
+		task.Status = "FAILED"
+	}
+
+	mesh, err := c.AppFileService.Save(&models.AppFile{
+		Url:      "", // Not used
+		Filename: "final.glb",
+		TaskId:   task.ID,
+		FileType: "mesh",
+	})
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save mesh"})
+		return
+	}
+
+	task.Mesh = mesh
+
+	if err := c.TaskService.SaveTask(task); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update task"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Task completed"})
 }

@@ -5,7 +5,8 @@ import (
 )
 
 type TaskJob struct {
-	ID uint
+	TaskID uint
+	UserID uint
 }
 
 type TaskService interface {

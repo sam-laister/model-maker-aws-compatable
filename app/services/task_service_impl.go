@@ -233,7 +233,7 @@ func (s *TaskServiceImpl) processTask(job TaskJob) {
 	// Create ECS client
 	client := ecs.NewFromConfig(cfg)
 
-	bucketInput := fmt.Sprintf("uploads/%d/", job.ID)
+	bucketInput := fmt.Sprintf("uploads/%d/", job.TaskID)
 	if os.Getenv("APP_ENV") == "dev" {
 		bucketInput = "development/" + bucketInput
 	}
@@ -250,6 +250,16 @@ func (s *TaskServiceImpl) processTask(job TaskJob) {
 				AssignPublicIp: types.AssignPublicIpEnabled,
 			},
 		},
+		Tags: []types.Tag{
+			{
+				Key:   aws.String("task-id"),
+				Value: aws.String(fmt.Sprintf("%d", job.TaskID)),
+			},
+			{
+				Key:   aws.String("user-id"),
+				Value: aws.String(fmt.Sprintf("%d", job.UserID)),
+			},
+		},
 		Overrides: &types.TaskOverride{
 			ContainerOverrides: []types.ContainerOverride{
 				{
@@ -261,7 +271,7 @@ func (s *TaskServiceImpl) processTask(job TaskJob) {
 						{Name: aws.String("KATAPULT_REGION"), Value: aws.String(os.Getenv("KATAPULT_REGION"))},
 						{Name: aws.String("KATAPULT_SECRET_KEY"), Value: aws.String(os.Getenv("KATAPULT_SECRET_KEY"))},
 						{Name: aws.String("BUCKET_INPUT"), Value: aws.String(bucketInput)},
-						{Name: aws.String("BUCKET_TASK_ID"), Value: aws.String(fmt.Sprintf("%d", job.ID))},
+						{Name: aws.String("BUCKET_TASK_ID"), Value: aws.String(fmt.Sprintf("%d", job.TaskID))},
 					},
 				},
 			},

@@ -32,6 +32,7 @@ func NewRouter(
 
 	// Swagger route
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.POST("/webhook/tasks/finish", taskController.WebhookTask)
 
 	// Authenticated routes
 	authRequired := r.Group("/")
