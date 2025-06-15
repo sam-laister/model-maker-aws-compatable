@@ -476,11 +476,13 @@ func (c *TaskController) WebhookTask(ctx *gin.Context) {
 		return
 	}
 
-	if payload.Detail.DesiredStatus == "STOPPED" {
-		task.Status = "FAILED"
-	} else {
-		task.Status = "SUCCESS"
-	}
+	// if payload.Detail.DesiredStatus == "STOPPED" {
+	// 	task.Status = "FAILED"
+	// } else {
+	// 	task.Status = "SUCCESS"
+	// }
+
+	task.Status = "SUCCESS"
 
 	mesh, err := c.AppFileService.Save(&models.AppFile{
 		Url:      "", // Not used
