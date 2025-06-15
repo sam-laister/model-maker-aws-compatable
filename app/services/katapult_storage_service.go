@@ -108,6 +108,10 @@ func (s *KatapultStorageService) UploadFromReader(reader io.Reader, taskID uint,
 }
 
 func (s *KatapultStorageService) GetFile(filepath string) (io.ReadCloser, error) {
+	if s.isDev {
+		filepath = "development/" + filepath
+	}
+
 	// Get object from S3
 	result, err := s.client.GetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: aws.String(s.bucketName),

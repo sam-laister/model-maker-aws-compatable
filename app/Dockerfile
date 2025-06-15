@@ -15,6 +15,8 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
+COPY . .
+
 EXPOSE 3333
 
 COPY entrypoint.sh /entrypoint.sh
@@ -22,4 +24,4 @@ RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 
-CMD ["tail", "-f", "/dev/null"]
+CMD ["make"]

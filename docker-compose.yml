@@ -2,8 +2,8 @@ services:
   modelmaker:
     build:
       context: ./app
-      dockerfile: Dockerfile.prod
-    container_name: model-maker-api
+      dockerfile: Dockerfile
+    container_name: model-maker-aws-api-prod
     networks:
       - db
     volumes:
@@ -40,6 +40,7 @@ services:
 volumes:
   postgres_data:
   pgadmin:
+
 
 networks:
   db:
