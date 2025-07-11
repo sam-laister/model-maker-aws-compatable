@@ -1,4 +1,4 @@
-# Model Maker Backend API
+# Model Maker Backend API (AWS Compatible)
 
 <img align="right" width="125" src="assets/app-icon.png">
 
